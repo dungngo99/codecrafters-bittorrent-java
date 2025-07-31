@@ -1,5 +1,6 @@
 import com.google.gson.Gson;
-// import com.dampcake.bencode.Bencode; - available if you need it!
+import domain.ValueWrapper;
+//import com.dampcake.bencode.Bencode;
 
 public class Main {
   private static final Gson gson = new Gson();
@@ -10,21 +11,23 @@ public class Main {
     }
     String command = args[0];
     if("decode".equals(command)) {
-        // Uncomment this block to pass the first stage
         String encodedValue = args[1];
-        String decoded;
+        //String decoded;
+      BEncoder bEncoder = new BEncoder(encodedValue);
+      Object o;
         try {
-          decoded = decodeBencode(encodedValue);
+          //decoded = decodeBencode(encodedValue);
+          ValueWrapper vw = bEncoder.decode();
+          o = ValueWrapper.convert(vw);
         } catch(RuntimeException e) {
           System.out.println(e.getMessage());
           return;
         }
-        System.out.println(gson.toJson(decoded));
-
+        //System.out.println(gson.toJson(decoded));
+        System.out.println(gson.toJson(o));
     } else {
       System.out.println("Unknown command: " + command);
     }
-
   }
 
   static String decodeBencode(String bEncodedString) {
@@ -42,5 +45,4 @@ public class Main {
       throw new RuntimeException("Only strings are supported at the moment");
     }
   }
-  
 }
