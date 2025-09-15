@@ -35,7 +35,6 @@ public class InfoHandler implements CommandHandler {
             BEncoderV2 bEncoderV2 = new BEncoderV2(byteArrayInputStream);
             return bEncoderV2.decode();
         } catch (IOException e) {
-            e.printStackTrace();
             throw new RuntimeException("InfoHandler.getValueWrapper(): failed to cast to FileInputStream, ignore: args=" + Arrays.toString(args), e);
         }
     }
