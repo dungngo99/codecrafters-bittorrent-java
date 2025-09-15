@@ -13,7 +13,7 @@ public class FileUtil {
     }
 
     public static Path getPath(String path) {
-        return Paths.get(getRootPath(), path);
+        return Paths.get(path);
     }
 
     public static File getFile(String path) {

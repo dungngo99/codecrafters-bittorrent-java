@@ -1,9 +1,12 @@
 package handler;
 
+import com.google.gson.Gson;
 import domain.ValueWrapper;
 
 public interface CommandHandler {
-    ValueWrapper handle(String[] args);
+    Gson gson = new Gson();
 
-    Object convert(ValueWrapper vw);
+    ValueWrapper getValueWrapper(String[] args);
+
+    void handleValueWrapper(ValueWrapper vw);
 }

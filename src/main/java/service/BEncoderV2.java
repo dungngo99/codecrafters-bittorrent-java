@@ -5,14 +5,16 @@ import enums.BEncodeTypeEnum;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class BEncoderV2 {
-    private final ByteArrayInputStream is;
-    private int offset;
+    private final byte[] bytes;
+    private int i;
 
     public BEncoderV2(ByteArrayInputStream is) {
-        this.is = is;
+        this.bytes = is.readAllBytes();
+        this.i = 0;
     }
 
     public ValueWrapper decode() throws IOException {
@@ -64,40 +66,44 @@ public class BEncoderV2 {
         Map<String, ValueWrapper> vwMap = new HashMap<>();
         ValueWrapper key = decode();
         while (Objects.nonNull(key)) {
+            String key_ = new String((byte[]) key.getO(), StandardCharsets.UTF_8);
             ValueWrapper value = decode();
-            vwMap.put((String) key.getO(), value);
+            vwMap.put(key_, value);
             key = decode();
         }
         return new ValueWrapper(BEncodeTypeEnum.DICT, vwMap);
     }
 
     public ValueWrapper decodeString() throws IOException {
-        decrement();
+        back();
         ValueWrapper vw = decodeInteger();
         int n = ((Long) vw.getO()).intValue();
-        String str = new String(nextNChar(n));
-        return new ValueWrapper(BEncodeTypeEnum.STRING, str);
-    }
-
-    public ByteArrayInputStream getIs() {
-        return is;
+        byte[] bytes = nextNBytes(n);
+        return new ValueWrapper(BEncodeTypeEnum.STRING, bytes);
     }
 
     public char nextChar() {
         return (char) next();
     }
 
-    public char[] nextNChar(int n) throws IOException {
-        byte[] bytes = is.readNBytes(n);
-        char[] chars = new char[n];
+    public byte[] nextNBytes(int n) {
+        byte[] bytes = new byte[n];
         for (int i=0; i<n; i++) {
-            chars[i] = (char) bytes[i];
+            bytes[i] = next();
         }
-        return chars;
+        return bytes;
     }
 
-    public int next() {
-        return is.read();
+    public byte next() {
+        return bytes[i++];
+    }
+
+    public byte back() {
+        return bytes[i--];
+    }
+
+    public int peek() {
+        return bytes[i];
     }
 
     public boolean isEOI(char b) {
@@ -112,26 +118,7 @@ public class BEncoderV2 {
         return b == '-';
     }
 
-    public void decrement() {
-        offset--;
-    }
-
-    public int increment() {
-        return offset++;
-    }
-
-    public int incrementByN(int n) {
-        return offset+=n;
-    }
-
     public boolean isEOS() {
         return peek() == -1;
-    }
-
-    public int peek() {
-        is.mark(offset);
-        int b = next();
-        is.reset();
-        return b;
     }
 }
