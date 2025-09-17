@@ -1,8 +1,8 @@
 package handler;
 
 import domain.ValueWrapper;
+import util.ValueWrapperUtil;
 import service.BDecoder;
-import service.BEncoder;
 
 public class DecodeHandler implements CommandHandler {
 
@@ -12,13 +12,13 @@ public class DecodeHandler implements CommandHandler {
             throw new RuntimeException("DecodeHandler: handle, invalid args");
         }
         String encodedValue = args[0];
-        BEncoder bEncoder = new BEncoder(encodedValue);
+        BDecoder bEncoder = new BDecoder(encodedValue);
         return bEncoder.decode();
     }
 
     @Override
     public void handleValueWrapper(ValueWrapper vw) {
-        Object o = BDecoder.decode(vw, Boolean.FALSE);
+        Object o = ValueWrapperUtil.convertToObject(vw, Boolean.FALSE);
         System.out.println(gson.toJson(o));
     }
 }

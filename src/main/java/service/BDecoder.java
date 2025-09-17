@@ -3,52 +3,114 @@ package service;
 import domain.ValueWrapper;
 import enums.BEncodeTypeEnum;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.logging.Logger;
 
 public class BDecoder {
-    private static final Logger logger = Logger.getLogger(BDecoder.class.getName());
+    private final String str;
+    private int i;
 
-    public static Object decode(ValueWrapper vw) {
-        return decode(vw, Boolean.FALSE);
+    public BDecoder(String str) {
+        this.str = str;
+        this.i = 0;
     }
 
-    public static Object decode(ValueWrapper vw, boolean needConvertString) {
-        if (Objects.isNull(vw)) {
-            logger.warning("DecodeHandler: convert, null vw, ignore");
+    public static boolean isEOI(Character c) {
+        return c == 'e';
+    }
+
+    public static boolean isColon(Character c) {
+        return c == ':';
+    }
+
+    public static boolean isNegative(Character c) {
+        return c == '-';
+    }
+
+    public ValueWrapper decode() {
+        if (isEOS()) {
             return null;
         }
-        BEncodeTypeEnum typeEnum = vw.getbEncodeType();
-        if (Objects.equals(typeEnum, BEncodeTypeEnum.INTEGER)) {
-            return vw.getO();
+        Character indicator = next();
+        if (BEncodeTypeEnum.isInteger(indicator)) {
+            return decodeInteger();
         }
-        if (Objects.equals(typeEnum, BEncodeTypeEnum.STRING)) {
-            // if use BEncoder, set needConvertString = false
-            return needConvertString ? new String((byte[]) vw.getO(), StandardCharsets.UTF_8) : vw.getO();
+        if (BEncodeTypeEnum.isList(indicator)) {
+            return decodeList();
         }
-        if (Objects.equals(typeEnum, BEncodeTypeEnum.LIST)) {
-            if (!(vw.getO() instanceof List<?>)) {
-                logger.warning("DecodeHandler: convert, object not BEncodeTypeEnum.LIST, ignore");
-                return null;
-            }
-            List<Object> list = new ArrayList<>();
-            for (Object vw_ : (List<?>) vw.getO()) {
-                list.add(decode((ValueWrapper) vw_, needConvertString));
-            }
-            return list;
+        if (BEncodeTypeEnum.isDict(indicator)) {
+            return decodeDict();
         }
-        if (Objects.equals(typeEnum, BEncodeTypeEnum.DICT)) {
-            if (!(vw.getO() instanceof Map<?, ?>)) {
-                logger.warning("DecodeHandler: convert, object not BEncodeTypeEnum.DICT, ignore");
-                return null;
-            }
-            Map<String, Object> map = new HashMap<>();
-            for (Map.Entry<?, ?> entry : ((Map<?, ?>) vw.getO()).entrySet()) {
-                map.put((String) entry.getKey(), decode((ValueWrapper) entry.getValue(), needConvertString));
-            }
-            return map;
+        if (BEncodeTypeEnum.isString(indicator) && !isEOI(indicator) && !isColon(indicator)) {
+            return decodeString();
         }
         return null;
+    }
+
+    public ValueWrapper decodeInteger() {
+        long ans = 0L;
+        char c = next();
+        boolean isNegative = isNegative(c);
+        if (isNegative) {
+            c = next();
+        }
+        while (!isEOI(c) && !isColon(c)) {
+            ans = ans * 10;
+            ans += c - '0';
+            c = next();
+        }
+        return new ValueWrapper(BEncodeTypeEnum.INTEGER, isNegative ? -ans : ans);
+    }
+
+    public ValueWrapper decodeString() {
+        decrement();
+        ValueWrapper vw = decodeInteger();
+        int n = ((Long) vw.getO()).intValue();
+        String str = new String(nextN(n));
+        return new ValueWrapper(BEncodeTypeEnum.STRING, str);
+    }
+
+    public ValueWrapper decodeList() {
+        List<ValueWrapper> vwList = new ArrayList<>();
+        ValueWrapper vw = decode();
+        while (Objects.nonNull(vw)) {
+            vwList.add(vw);
+            vw = decode();
+        }
+        return new ValueWrapper(BEncodeTypeEnum.LIST, vwList);
+    }
+
+    public ValueWrapper decodeDict() {
+        Map<String, ValueWrapper> vwMap = new HashMap<>();
+        ValueWrapper key = decode();
+        while (Objects.nonNull(key)) {
+            ValueWrapper value = decode();
+            vwMap.put((String) key.getO(), value);
+            key = decode();
+        }
+        return new ValueWrapper(BEncodeTypeEnum.DICT, vwMap);
+    }
+
+    public Character next() {
+        return str.charAt(increment());
+    }
+
+    public char[] nextN(int n) {
+        return str.substring(i, incrementByN(n)).toCharArray();
+    }
+
+    public void decrement() {
+        i--;
+    }
+
+    public int increment() {
+        return i++;
+    }
+
+    public int incrementByN(int n) {
+        return i+=n;
+    }
+
+    public boolean isEOS() {
+        return i == str.length();
     }
 }

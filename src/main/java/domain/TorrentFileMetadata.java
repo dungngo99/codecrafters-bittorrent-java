@@ -34,6 +34,7 @@ public class TorrentFileMetadata {
         private String name;
         private Integer pieceLength;
         private byte[] pieces;
+        private String hash;
 
         public Integer getLength() {
             return length;
@@ -66,10 +67,18 @@ public class TorrentFileMetadata {
         public void setPieces(byte[] pieces) {
             this.pieces = pieces;
         }
+
+        public String getHash() {
+            return hash;
+        }
+
+        public void setHash(String hash) {
+            this.hash = hash;
+        }
     }
 
     @Override
     public String toString() {
-        return "Tracker URL: " + announce + "\n" + "Length: " + info.length;
+        return "Tracker URL: " + announce + "\n" + "Length: " + info.length + "\n" + "Info Hash: " + info.hash;
     }
 }

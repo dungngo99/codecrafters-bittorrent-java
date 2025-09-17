@@ -3,34 +3,24 @@ package service;
 import domain.ValueWrapper;
 import enums.BEncodeTypeEnum;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class BEncoder {
-    private final String str;
+public class BDecoderV2 {
+    private final byte[] bytes;
     private int i;
 
-    public BEncoder(String str) {
-        this.str = str;
+    public BDecoderV2(ByteArrayInputStream is) {
+        this.bytes = is.readAllBytes();
         this.i = 0;
-    }
-
-    public static boolean isEOI(Character c) {
-        return c == 'e';
-    }
-
-    public static boolean isColon(Character c) {
-        return c == ':';
-    }
-
-    public static boolean isNegative(Character c) {
-        return c == '-';
     }
 
     public ValueWrapper decode() {
         if (isEOS()) {
             return null;
         }
-        Character indicator = next();
+        char indicator = nextChar();
         if (BEncodeTypeEnum.isInteger(indicator)) {
             return decodeInteger();
         }
@@ -47,26 +37,18 @@ public class BEncoder {
     }
 
     public ValueWrapper decodeInteger() {
-        long ans = 0L;
-        char c = next();
+        int ans = 0;
+        char c = nextChar();
         boolean isNegative = isNegative(c);
         if (isNegative) {
-            c = next();
+            c = nextChar();
         }
         while (!isEOI(c) && !isColon(c)) {
             ans = ans * 10;
             ans += c - '0';
-            c = next();
+            c = nextChar();
         }
         return new ValueWrapper(BEncodeTypeEnum.INTEGER, isNegative ? -ans : ans);
-    }
-
-    public ValueWrapper decodeString() {
-        decrement();
-        ValueWrapper vw = decodeInteger();
-        int n = ((Long) vw.getO()).intValue();
-        String str = new String(nextN(n));
-        return new ValueWrapper(BEncodeTypeEnum.STRING, str);
     }
 
     public ValueWrapper decodeList() {
@@ -80,37 +62,62 @@ public class BEncoder {
     }
 
     public ValueWrapper decodeDict() {
-        Map<String, ValueWrapper> vwMap = new HashMap<>();
+        Map<String, ValueWrapper> vwMap = new LinkedHashMap<>();
         ValueWrapper key = decode();
         while (Objects.nonNull(key)) {
+            String key_ = new String((byte[]) key.getO(), StandardCharsets.UTF_8);
             ValueWrapper value = decode();
-            vwMap.put((String) key.getO(), value);
+            vwMap.put(key_, value);
             key = decode();
         }
         return new ValueWrapper(BEncodeTypeEnum.DICT, vwMap);
     }
 
-    public Character next() {
-        return str.charAt(increment());
+    public ValueWrapper decodeString() {
+        back();
+        ValueWrapper vw = decodeInteger();
+        int n = (Integer) vw.getO();
+        byte[] bytes = nextNBytes(n);
+        return new ValueWrapper(BEncodeTypeEnum.STRING, bytes);
     }
 
-    public char[] nextN(int n) {
-        return str.substring(i, incrementByN(n)).toCharArray();
+    public char nextChar() {
+        return (char) next();
     }
 
-    public void decrement() {
-        i--;
+    public byte[] nextNBytes(int n) {
+        byte[] bytes = new byte[n];
+        for (int i=0; i<n; i++) {
+            bytes[i] = next();
+        }
+        return bytes;
     }
 
-    public int increment() {
-        return i++;
+    public byte next() {
+        return bytes[i++];
     }
 
-    public int incrementByN(int n) {
-        return i+=n;
+    public byte back() {
+        return bytes[i--];
+    }
+
+    public int peek() {
+        return bytes[i];
+    }
+
+    public boolean isEOI(char b) {
+        return b == 'e';
+    }
+
+    public boolean isColon(char b) {
+        return b == ':';
+    }
+
+    public boolean isNegative(char b) {
+        return b == '-';
     }
 
     public boolean isEOS() {
-        return i == str.length();
+        return peek() == -1;
     }
 }

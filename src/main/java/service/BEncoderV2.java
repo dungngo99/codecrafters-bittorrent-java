@@ -2,123 +2,83 @@ package service;
 
 import domain.ValueWrapper;
 import enums.BEncodeTypeEnum;
+import exception.ArgumentException;
 
-import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class BEncoderV2 {
-    private final byte[] bytes;
-    private int i;
+    private final ValueWrapper vw;
+    private final ByteArrayOutputStream os;
 
-    public BEncoderV2(ByteArrayInputStream is) {
-        this.bytes = is.readAllBytes();
-        this.i = 0;
+    public BEncoderV2(ValueWrapper vw) {
+        this.vw = vw;
+        assert vw != null;
+        this.os = new ByteArrayOutputStream();
     }
 
-    public ValueWrapper decode() throws IOException {
-        if (isEOS()) {
-            return null;
+    public byte[] encode() throws IOException {
+        encode(vw);
+        return os.toByteArray();
+    }
+
+    private void encode(ValueWrapper vw_) throws IOException {
+        if (Objects.isNull(vw_)) {
+            return;
         }
-        char indicator = nextChar();
-        if (BEncodeTypeEnum.isInteger(indicator)) {
-            return decodeInteger();
+        BEncodeTypeEnum bEncodeTypeEnum = vw_.getbEncodeType();
+        Object o = vw_.getO();
+        if (Objects.equals(bEncodeTypeEnum, BEncodeTypeEnum.INTEGER)) {
+            encodeInt((Integer) o);
+        } else if (Objects.equals(bEncodeTypeEnum, BEncodeTypeEnum.STRING)) {
+            encodeString((byte[]) o);
+        } else if (Objects.equals(bEncodeTypeEnum, BEncodeTypeEnum.LIST)) {
+            encodeList((List<ValueWrapper>) o);
+        } else if (Objects.equals(bEncodeTypeEnum, BEncodeTypeEnum.DICT)) {
+            encodeDict((Map<String, ValueWrapper>) o);
+        } else {
+            throw new ArgumentException("invalid b-encode type from ValueWrapper");
         }
-        if (BEncodeTypeEnum.isList(indicator)) {
-            return decodeList();
+    }
+
+    private void encodeInt(Integer i) throws IOException {
+        os.write('i');
+        os.write(String.valueOf(i).getBytes(StandardCharsets.UTF_8));
+        os.write('e');
+    }
+
+    private void encodeString(byte[] bytes) throws IOException {
+        os.write(String.valueOf(bytes.length).getBytes(StandardCharsets.UTF_8));
+        os.write(':');
+        os.write(bytes);
+    }
+
+    private void encodeList(List<ValueWrapper> list) throws IOException {
+        os.write('l');
+        for (ValueWrapper vw: list) {
+            encode(vw);
         }
-        if (BEncodeTypeEnum.isDict(indicator)) {
-            return decodeDict();
+        os.write('e');
+    }
+
+    private void encodeDict(Map<String, ValueWrapper> map) throws IOException {
+        os.write('d');
+        for (Map.Entry<String, ValueWrapper> entry: map.entrySet()) {
+            encodeString(entry.getKey().getBytes(StandardCharsets.UTF_8));
+            encode(entry.getValue());
         }
-        if (BEncodeTypeEnum.isString(indicator) && !isEOI(indicator) && !isColon(indicator)) {
-            return decodeString();
-        }
-        return null;
+        os.write('e');
     }
 
-    public ValueWrapper decodeInteger() {
-        long ans = 0L;
-        char c = nextChar();
-        boolean isNegative = isNegative(c);
-        if (isNegative) {
-            c = nextChar();
-        }
-        while (!isEOI(c) && !isColon(c)) {
-            ans = ans * 10;
-            ans += c - '0';
-            c = nextChar();
-        }
-        return new ValueWrapper(BEncodeTypeEnum.INTEGER, isNegative ? -ans : ans);
+    public ValueWrapper getVw() {
+        return vw;
     }
 
-    public ValueWrapper decodeList() throws IOException {
-        List<ValueWrapper> vwList = new ArrayList<>();
-        ValueWrapper vw = decode();
-        while (Objects.nonNull(vw)) {
-            vwList.add(vw);
-            vw = decode();
-        }
-        return new ValueWrapper(BEncodeTypeEnum.LIST, vwList);
-    }
-
-    public ValueWrapper decodeDict() throws IOException {
-        Map<String, ValueWrapper> vwMap = new HashMap<>();
-        ValueWrapper key = decode();
-        while (Objects.nonNull(key)) {
-            String key_ = new String((byte[]) key.getO(), StandardCharsets.UTF_8);
-            ValueWrapper value = decode();
-            vwMap.put(key_, value);
-            key = decode();
-        }
-        return new ValueWrapper(BEncodeTypeEnum.DICT, vwMap);
-    }
-
-    public ValueWrapper decodeString() throws IOException {
-        back();
-        ValueWrapper vw = decodeInteger();
-        int n = ((Long) vw.getO()).intValue();
-        byte[] bytes = nextNBytes(n);
-        return new ValueWrapper(BEncodeTypeEnum.STRING, bytes);
-    }
-
-    public char nextChar() {
-        return (char) next();
-    }
-
-    public byte[] nextNBytes(int n) {
-        byte[] bytes = new byte[n];
-        for (int i=0; i<n; i++) {
-            bytes[i] = next();
-        }
-        return bytes;
-    }
-
-    public byte next() {
-        return bytes[i++];
-    }
-
-    public byte back() {
-        return bytes[i--];
-    }
-
-    public int peek() {
-        return bytes[i];
-    }
-
-    public boolean isEOI(char b) {
-        return b == 'e';
-    }
-
-    public boolean isColon(char b) {
-        return b == ':';
-    }
-
-    public boolean isNegative(char b) {
-        return b == '-';
-    }
-
-    public boolean isEOS() {
-        return peek() == -1;
+    public ByteArrayOutputStream getOs() {
+        return os;
     }
 }
