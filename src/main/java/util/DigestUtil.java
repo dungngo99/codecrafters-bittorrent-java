@@ -1,5 +1,7 @@
 package util;
 
+import constants.Constant;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
@@ -23,5 +25,22 @@ public class DigestUtil {
             logger.log(Level.SEVERE, "SHA-1 algorithm not found: " + e.getMessage());
             return null;
         }
+    }
+
+    public static String formatHex(byte[] bytes) {
+        return HexFormat.of().formatHex(bytes);
+    }
+
+    public static String[] formatPieceHashes(byte[] pieces) {
+        int numPieces = pieces.length / Constant.PIECE_HASH_UNIT_LENGTH;
+        String[] pieceHashes = new String[numPieces];
+
+        for (int i=0; i<numPieces; i++) {
+            byte[] bytes = new byte[Constant.PIECE_HASH_UNIT_LENGTH];
+            System.arraycopy(pieces, i * Constant.PIECE_HASH_UNIT_LENGTH, bytes, 0, Constant.PIECE_HASH_UNIT_LENGTH);
+            pieceHashes[i] = formatHex(bytes);
+        }
+
+        return pieceHashes;
     }
 }

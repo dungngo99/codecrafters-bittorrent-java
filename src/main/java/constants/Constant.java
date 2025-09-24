@@ -10,4 +10,5 @@ public class Constant {
     public static final String INFO_NAME_KEY_INFO_CMD = "name";
     public static final String INFO_PIECE_LENGTH_INFO_CMD = "piece length";
     public static final String INFO_PIECES_INFO_CMD = "pieces";
+    public static final Integer PIECE_HASH_UNIT_LENGTH = 20;
 }

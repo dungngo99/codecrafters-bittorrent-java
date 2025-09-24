@@ -67,13 +67,14 @@ public class InfoHandler implements CommandHandler {
         byte[] pieces = MapUtil.getNestedKey(map, new String[]{INFO_KEY_INFO_CMD, INFO_PIECES_INFO_CMD}, new byte[]{});
         info.setPieces(pieces);
         info.setHash(getInfoHash(vw));
+        info.setPieceHashes(DigestUtil.formatPieceHashes(pieces));
 
         System.out.println(metadata);
     }
 
     private String getInfoHash(ValueWrapper vw) {
-        ValueWrapper vwObjectFromMap = ValueWrapperUtil.getObjectFromMap(vw, INFO_KEY_INFO_CMD);
-        BEncoderV2 bEncoderV2 = new BEncoderV2(vwObjectFromMap);
+        ValueWrapper infoVW = ValueWrapperUtil.getObjectFromMap(vw, INFO_KEY_INFO_CMD);
+        BEncoderV2 bEncoderV2 = new BEncoderV2(infoVW);
         try {
             byte[] infoBytes = bEncoderV2.encode();
             return DigestUtil.calculateSHA1(infoBytes);
