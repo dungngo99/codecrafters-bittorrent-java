@@ -16,6 +16,11 @@ public class BDecoderV2 {
         this.i = 0;
     }
 
+    public BDecoderV2(byte[] bytes) {
+        this.bytes = bytes;
+        this.i = 0;
+    }
+
     public ValueWrapper decode() {
         if (isEOS()) {
             return null;
@@ -36,7 +41,7 @@ public class BDecoderV2 {
         return null;
     }
 
-    public ValueWrapper decodeInteger() {
+    private ValueWrapper decodeInteger() {
         int ans = 0;
         char c = nextChar();
         boolean isNegative = isNegative(c);
@@ -51,7 +56,7 @@ public class BDecoderV2 {
         return new ValueWrapper(BEncodeTypeEnum.INTEGER, isNegative ? -ans : ans);
     }
 
-    public ValueWrapper decodeList() {
+    private ValueWrapper decodeList() {
         List<ValueWrapper> vwList = new ArrayList<>();
         ValueWrapper vw = decode();
         while (Objects.nonNull(vw)) {
@@ -61,7 +66,7 @@ public class BDecoderV2 {
         return new ValueWrapper(BEncodeTypeEnum.LIST, vwList);
     }
 
-    public ValueWrapper decodeDict() {
+    private ValueWrapper decodeDict() {
         Map<String, ValueWrapper> vwMap = new LinkedHashMap<>();
         ValueWrapper key = decode();
         while (Objects.nonNull(key)) {
@@ -73,7 +78,7 @@ public class BDecoderV2 {
         return new ValueWrapper(BEncodeTypeEnum.DICT, vwMap);
     }
 
-    public ValueWrapper decodeString() {
+    private ValueWrapper decodeString() {
         back();
         ValueWrapper vw = decodeInteger();
         int n = (Integer) vw.getO();
@@ -81,43 +86,43 @@ public class BDecoderV2 {
         return new ValueWrapper(BEncodeTypeEnum.STRING, bytes);
     }
 
-    public char nextChar() {
+    private char nextChar() {
         return (char) next();
     }
 
-    public byte[] nextNBytes(int n) {
+    private byte[] nextNBytes(int n) {
         byte[] bytes = new byte[n];
-        for (int i=0; i<n; i++) {
+        for (int i = 0; i < n; i++) {
             bytes[i] = next();
         }
         return bytes;
     }
 
-    public byte next() {
+    private byte next() {
         return bytes[i++];
     }
 
-    public byte back() {
+    private byte back() {
         return bytes[i--];
     }
 
-    public int peek() {
+    private int peek() {
         return bytes[i];
     }
 
-    public boolean isEOI(char b) {
+    private boolean isEOI(char b) {
         return b == 'e';
     }
 
-    public boolean isColon(char b) {
+    private boolean isColon(char b) {
         return b == ':';
     }
 
-    public boolean isNegative(char b) {
+    private boolean isNegative(char b) {
         return b == '-';
     }
 
-    public boolean isEOS() {
+    private boolean isEOS() {
         return peek() == -1;
     }
 }

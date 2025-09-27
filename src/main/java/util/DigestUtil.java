@@ -35,7 +35,7 @@ public class DigestUtil {
         int numPieces = pieces.length / Constant.PIECE_HASH_UNIT_LENGTH;
         String[] pieceHashes = new String[numPieces];
 
-        for (int i=0; i<numPieces; i++) {
+        for (int i = 0; i < numPieces; i++) {
             byte[] bytes = new byte[Constant.PIECE_HASH_UNIT_LENGTH];
             System.arraycopy(pieces, i * Constant.PIECE_HASH_UNIT_LENGTH, bytes, 0, Constant.PIECE_HASH_UNIT_LENGTH);
             pieceHashes[i] = formatHex(bytes);

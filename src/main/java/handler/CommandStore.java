@@ -11,6 +11,7 @@ public class CommandStore {
     public static final Map<String, CommandHandler> store = new HashMap<>() {{
         put(CommandTypeEnum.DECODE.name().toLowerCase(), new DecodeHandler());
         put(CommandTypeEnum.INFO.name().toLowerCase(), new InfoHandler());
+        put(CommandTypeEnum.PEERS.name().toLowerCase(), new PeersHandler());
     }};
 
     public static CommandHandler getCommand(String command) {

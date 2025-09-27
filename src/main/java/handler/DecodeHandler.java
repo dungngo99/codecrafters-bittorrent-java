@@ -1,8 +1,8 @@
 package handler;
 
 import domain.ValueWrapper;
-import util.ValueWrapperUtil;
 import service.BDecoder;
+import util.ValueWrapperUtil;
 
 public class DecodeHandler implements CommandHandler {
 

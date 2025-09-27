@@ -1,6 +1,6 @@
 package domain;
 
-public class TorrentFileMetadata {
+public class TorrentFile {
     private String announce;
     private String createdBy;
     private Info info;

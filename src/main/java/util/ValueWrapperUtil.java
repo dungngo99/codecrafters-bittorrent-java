@@ -56,7 +56,7 @@ public class ValueWrapperUtil {
         if (Objects.isNull(vw) || !(vw.getO() instanceof Map<?, ?> map)) {
             return null;
         }
-        for (Map.Entry<?, ?> entry: map.entrySet()) {
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
             String entryKey = (String) entry.getKey();
             if (Objects.equals(entryKey, key)) {
                 return (ValueWrapper) entry.getValue();

@@ -59,7 +59,7 @@ public class BEncoderV2 {
 
     private void encodeList(List<ValueWrapper> list) throws IOException {
         os.write('l');
-        for (ValueWrapper vw: list) {
+        for (ValueWrapper vw : list) {
             encode(vw);
         }
         os.write('e');
@@ -67,7 +67,7 @@ public class BEncoderV2 {
 
     private void encodeDict(Map<String, ValueWrapper> map) throws IOException {
         os.write('d');
-        for (Map.Entry<String, ValueWrapper> entry: map.entrySet()) {
+        for (Map.Entry<String, ValueWrapper> entry : map.entrySet()) {
             encodeString(entry.getKey().getBytes(StandardCharsets.UTF_8));
             encode(entry.getValue());
         }

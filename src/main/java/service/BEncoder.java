@@ -3,13 +3,16 @@ package service;
 import domain.ValueWrapper;
 import enums.BEncodeTypeEnum;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class BDecoder {
+public class BEncoder {
     private final String str;
     private int i;
 
-    public BDecoder(String str) {
+    public BEncoder(String str) {
         this.str = str;
         this.i = 0;
     }
@@ -47,11 +50,11 @@ public class BDecoder {
     }
 
     private ValueWrapper decodeInteger() {
-        long ans = 0L;
+        int ans = 0;
         char c = next();
         boolean isNegative = isNegative(c);
         if (isNegative) {
-            c = next();
+            increment();
         }
         while (!isEOI(c) && !isColon(c)) {
             ans = ans * 10;
@@ -64,30 +67,29 @@ public class BDecoder {
     private ValueWrapper decodeString() {
         decrement();
         ValueWrapper vw = decodeInteger();
-        int n = ((Long) vw.getO()).intValue();
-        String str = new String(nextN(n));
+        String str = new String(nextN((int) vw.getO()));
         return new ValueWrapper(BEncodeTypeEnum.STRING, str);
     }
 
     private ValueWrapper decodeList() {
-        List<ValueWrapper> vwList = new ArrayList<>();
+        List<ValueWrapper> list = new ArrayList<>();
         ValueWrapper vw = decode();
-        while (Objects.nonNull(vw)) {
-            vwList.add(vw);
+        while (vw != null) {
+            list.add(vw);
             vw = decode();
         }
-        return new ValueWrapper(BEncodeTypeEnum.LIST, vwList);
+        return new ValueWrapper(BEncodeTypeEnum.LIST, list);
     }
 
     private ValueWrapper decodeDict() {
-        Map<String, ValueWrapper> vwMap = new HashMap<>();
+        Map<String, ValueWrapper> map = new HashMap<>();
         ValueWrapper key = decode();
-        while (Objects.nonNull(key)) {
-            ValueWrapper value = decode();
-            vwMap.put((String) key.getO(), value);
+        while (key != null) {
+            ValueWrapper vw = decode();
+            map.put((String) key.getO(), vw);
             key = decode();
         }
-        return new ValueWrapper(BEncodeTypeEnum.DICT, vwMap);
+        return new ValueWrapper(BEncodeTypeEnum.DICT, map);
     }
 
     private Character next() {
@@ -98,8 +100,12 @@ public class BDecoder {
         return str.substring(i, incrementByN(n)).toCharArray();
     }
 
-    private void decrement() {
-        i--;
+    private boolean isEOS() {
+        return i == str.length();
+    }
+
+    private int decrement() {
+        return i--;
     }
 
     private int increment() {
@@ -110,7 +116,15 @@ public class BDecoder {
         return i += n;
     }
 
-    private boolean isEOS() {
-        return i == str.length();
+    private int getI() {
+        return i;
+    }
+
+    private void setI(int i) {
+        this.i = i;
+    }
+
+    private String getStr() {
+        return str;
     }
 }

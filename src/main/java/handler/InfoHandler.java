@@ -1,14 +1,13 @@
 package handler;
 
-import domain.TorrentFileMetadata;
+import domain.TorrentFile;
 import domain.ValueWrapper;
 import exception.ArgumentException;
-import service.BEncoderV2;
-import util.ValueWrapperUtil;
 import service.BDecoderV2;
-import util.FileUtil;
+import service.ValueWrapperHelper;
 import util.DigestUtil;
-import util.MapUtil;
+import util.FileUtil;
+import util.ValueWrapperUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -19,7 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
 
-import static constants.Constant.*;
+import static constants.Constant.DEFAULT_PARAMS_SIZE_INFO_CMD;
 
 public class InfoHandler implements CommandHandler {
     private static final Logger logger = Logger.getLogger(InfoHandler.class.getName());
@@ -44,42 +43,24 @@ public class InfoHandler implements CommandHandler {
     @Override
     public void handleValueWrapper(ValueWrapper vw) {
         Object o = ValueWrapperUtil.convertToObject(vw);
-        if (!(o instanceof Map<?,?>)) {
+        if (!(o instanceof Map<?, ?> map)) {
             logger.warning("InfoHandler.handleValueWrapper(): invalid decoded value, ignore");
             return;
         }
-        Map<?, ?> map = (Map<?, ?>) o;
-        TorrentFileMetadata metadata = new TorrentFileMetadata();
-        TorrentFileMetadata.Info info = new TorrentFileMetadata.Info();
+        TorrentFile metadata = new TorrentFile();
+        TorrentFile.Info info = new TorrentFile.Info();
         metadata.setInfo(info);
 
-        String announce = new String(MapUtil.getKey(map, ANNOUNCE_KEY_INFO_CMD, new byte[]{}));
-        metadata.setAnnounce(announce);
-        String createdBy = new String(MapUtil.getKey(map, CREATED_BY_KEY_INFO_CMD, new byte[]{}));
-        metadata.setCreatedBy(createdBy);
-
-        Integer length = MapUtil.getNestedKey(map, new String[]{INFO_KEY_INFO_CMD, INFO_LENGTH_KEY_INFO_CMD}, -1);
-        info.setLength(length);
-        String name = new String(MapUtil.getNestedKey(map, new String[]{INFO_KEY_INFO_CMD, INFO_NAME_KEY_INFO_CMD}, new byte[]{}));
-        info.setName(name);
-        Integer pieceLength = MapUtil.getNestedKey(map, new String[]{INFO_KEY_INFO_CMD, INFO_PIECE_LENGTH_INFO_CMD}, -1);
-        info.setPieceLength(pieceLength);
-        byte[] pieces = MapUtil.getNestedKey(map, new String[]{INFO_KEY_INFO_CMD, INFO_PIECES_INFO_CMD}, new byte[]{});
-        info.setPieces(pieces);
-        info.setHash(getInfoHash(vw));
-        info.setPieceHashes(DigestUtil.formatPieceHashes(pieces));
+        ValueWrapperHelper torrentFileHelper = new ValueWrapperHelper(map);
+        metadata.setAnnounce(torrentFileHelper.getAnnounce());
+        metadata.setCreatedBy(torrentFileHelper.getCreatedBy());
+        info.setLength(torrentFileHelper.getInfoLength());
+        info.setName(torrentFileHelper.getInfoName());
+        info.setPieceLength(torrentFileHelper.getInfoPieceLength());
+        info.setPieces(torrentFileHelper.getInfoPieces());
+        info.setHash(torrentFileHelper.getInfoHash(vw));
+        info.setPieceHashes(DigestUtil.formatPieceHashes(info.getPieces()));
 
         System.out.println(metadata);
-    }
-
-    private String getInfoHash(ValueWrapper vw) {
-        ValueWrapper infoVW = ValueWrapperUtil.getObjectFromMap(vw, INFO_KEY_INFO_CMD);
-        BEncoderV2 bEncoderV2 = new BEncoderV2(infoVW);
-        try {
-            byte[] infoBytes = bEncoderV2.encode();
-            return DigestUtil.calculateSHA1(infoBytes);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

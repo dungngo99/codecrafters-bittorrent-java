@@ -2,18 +2,23 @@ package util;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 
 public class MapUtil {
 
-    public static <T> T getKey(Map<?,?> map, String key, T defaultValue) {
+    public static <T> T getKey(Map<?, ?> map, String key, T defaultValue) {
         return map.containsKey(key) ? (T) map.get(key) : defaultValue;
     }
 
-    public static <T> T getNestedKey(Map<?,?> map, String[] keys, T defaultValue) {
+    public static <T> T getNestedKey(Map<?, ?> map, String[] keys, T defaultValue) {
         return getNestedKey(map, keys, defaultValue, 0);
     }
 
-    private static <T> T getNestedKey(Map<?,?> map, String[] keys, T defaultValue, int idx) {
+    public static boolean isEmpty(Map map) {
+        return Objects.isNull(map) || map.isEmpty();
+    }
+
+    private static <T> T getNestedKey(Map<?, ?> map, String[] keys, T defaultValue, int idx) {
         int l = keys.length;
         if (idx < 0 || idx >= l) {
             throw new RuntimeException("MapUtil.getNestedKey(): invalid idx=" + idx + " ; keys=" + Arrays.toString(keys));
@@ -23,12 +28,12 @@ public class MapUtil {
             return defaultValue;
         }
         Object o = map.get(key);
-        if (idx == l-1) {
+        if (idx == l - 1) {
             return (T) o;
         }
-        if (!(o instanceof Map<?,?>)) {
+        if (!(o instanceof Map<?, ?>)) {
             return null;
         }
-        return getNestedKey((Map<?, ?>) o, keys, defaultValue, idx+1);
+        return getNestedKey((Map<?, ?>) o, keys, defaultValue, idx + 1);
     }
 }
