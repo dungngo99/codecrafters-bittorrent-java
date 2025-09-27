@@ -32,6 +32,10 @@ public class HttpClient {
     }
 
     public HttpResponse get(String url, Map<String, String> headers, Map<String, String> params, HttpRequestOption option) {
+        return doGet(url, headers, params, option);
+    }
+
+    private HttpResponse doGet(String url, Map<String, String> headers, Map<String, String> params, HttpRequestOption option) {
         if (Objects.nonNull(params)) {
             String queryParam = HttpUtil.formatQueryParams(params, option.isNeedUrlEncodeQueryParam());
             url = url + Constant.QUESTION_MARK_SIGN + queryParam;
