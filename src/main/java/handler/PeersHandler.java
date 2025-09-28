@@ -8,7 +8,7 @@ import enums.CommandTypeEnum;
 import exception.ArgumentException;
 import service.BDecoderV2;
 import service.HttpClient;
-import service.ValueWrapperHelper;
+import service.VWMapHelper;
 import util.HttpUtil;
 import util.ValueWrapperUtil;
 
@@ -39,11 +39,11 @@ public class PeersHandler implements CommandHandler {
             logger.warning("PeersHandler.handleValueWrapper(): invalid decoded value, ignore");
             return;
         }
-        ValueWrapperHelper torrentFileHelper = new ValueWrapperHelper(map);
+        VWMapHelper torrentFileHelper = new VWMapHelper(map);
         Map<String, String> queryParams = new HashMap<>();
-        String infoHash = torrentFileHelper.getInfoHash(vw);
-        queryParams.put(INFO_HASH_QUERY_PARAM_KEY, torrentFileHelper.urlEncodeInfoHash(infoHash));
-        queryParams.put(PEER_ID_QUERY_PARAM_KEY, torrentFileHelper.getSetPeerId());
+        String infoHash = ValueWrapperUtil.getInfoHashAsHex(vw);
+        queryParams.put(INFO_HASH_QUERY_PARAM_KEY, ValueWrapperUtil.urlEncodeInfoHash(infoHash));
+        queryParams.put(PEER_ID_QUERY_PARAM_KEY, ValueWrapperUtil.getSetPeerId());
         queryParams.put(PORT_QUERY_PARAM_KEY, DEFAULT_PORT_QUERY_PARAM_VALUE);
         queryParams.put(UPLOADED_QUERY_PARAM_KEY, String.valueOf(DEFAULT_UPLOADED_QUERY_PARAM_VALUE));
         queryParams.put(DOWNLOADED_QUERY_PARAM_KEY, String.valueOf(DEFAULT_DOWNLOADED_QUERY_PARAM_VALUE));
@@ -65,7 +65,7 @@ public class PeersHandler implements CommandHandler {
             return;
         }
 
-        ValueWrapperHelper valueWrapperHelper = new ValueWrapperHelper(trackerVWMap);
+        VWMapHelper valueWrapperHelper = new VWMapHelper(trackerVWMap);
         if (!valueWrapperHelper.getFailureReason().isBlank()) {
             System.out.println(valueWrapperHelper.getFailureReason());
             return;

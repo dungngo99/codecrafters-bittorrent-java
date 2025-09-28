@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 public class DigestUtil {
     private static final Logger logger = Logger.getLogger(DigestUtil.class.getName());
 
-    public static String calculateSHA1(byte[] bytes) {
+    public static String calculateSHA1AsHex(byte[] bytes) {
         try {
             // obtain a MessageDigest instance for SHA-1
             MessageDigest sha1Digest = MessageDigest.getInstance("SHA-1");
@@ -21,6 +21,19 @@ public class DigestUtil {
 
             // Convert byte array to a hexadecimal string
             return HexFormat.of().formatHex(hashBytes);
+        } catch (NoSuchAlgorithmException e) {
+            logger.log(Level.SEVERE, "SHA-1 algorithm not found: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public static byte[] calculateSHA1AsBytes(byte[] bytes) {
+        try {
+            // obtain a MessageDigest instance for SHA-1
+            MessageDigest sha1Digest = MessageDigest.getInstance("SHA-1");
+
+            // Compute then return the hash
+            return sha1Digest.digest(bytes);
         } catch (NoSuchAlgorithmException e) {
             logger.log(Level.SEVERE, "SHA-1 algorithm not found: " + e.getMessage());
             return null;

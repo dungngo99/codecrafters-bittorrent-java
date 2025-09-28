@@ -12,6 +12,7 @@ public class CommandStore {
         put(CommandTypeEnum.DECODE.name().toLowerCase(), new DecodeHandler());
         put(CommandTypeEnum.INFO.name().toLowerCase(), new InfoHandler());
         put(CommandTypeEnum.PEERS.name().toLowerCase(), new PeersHandler());
+        put(CommandTypeEnum.HANDSHAKE.name().toLowerCase(), new HandshakeHandler());
     }};
 
     public static CommandHandler getCommand(String command) {

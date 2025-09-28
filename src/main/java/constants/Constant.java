@@ -9,6 +9,7 @@ public class Constant {
     public static final String USER_DIR_ROOT_PATH = "user.dir";
     public static final Integer DEFAULT_PARAMS_SIZE_INFO_CMD = 1;
     public static final Integer DEFAULT_PARAMS_SIZE_PEERS_CMD = 1;
+    public static final Integer DEFAULT_PARAMS_SIZE_HANDSHAKE_CMD = 2;
     public static final String ANNOUNCE_KEY_INFO_CMD = "announce";
     public static final String CREATED_BY_KEY_INFO_CMD = "created by";
     public static final String INFO_KEY_INFO_CMD = "info";
@@ -25,6 +26,8 @@ public class Constant {
     public static final String PORT_QUERY_PARAM_KEY = "port";
     public static final String UPLOADED_QUERY_PARAM_KEY = "uploaded";
     public static final String DOWNLOADED_QUERY_PARAM_KEY = "downloaded";
+    public static final String TORRENT_FILE_VALUE_WRAPPER_KEY = "torrent_file_value_wrapper";
+    public static final String HANDSHAKE_IP_PORT_VALUE_WRAPPER_KEY = "handshake_ip_port_value_wrapper";
     public static final String LEFT_QUERY_PARAM_KEY = "left";
     public static final String COMPACT_QUERY_PARAM_KEY = "compact";
     public static final String DEFAULT_PORT_QUERY_PARAM_VALUE = "6881";
@@ -67,4 +70,13 @@ public class Constant {
     public static final Integer PEER_IP_ADDRESS_BYTE_ARRAY_LENGTH = 4;
     public static final Integer PEER_PORT_NUMBER_BYTE_ARRAY_LENGTH = 2;
     public static final Integer RADIX_HEX_TO_INT = 16;
+    public static final Integer HANDSHAKE_IP_ADDRESS_INDEX = 0;
+    public static final Integer HANDSHAKE_PORT_NUMBER_INDEX = 1;
+    public static final Integer HANDSHAKE_HEADER_BYTE_LENGTH = 1;
+    public static final Integer HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH = 19;
+    public static final Integer HANDSHAKE_RESERVED_BYTE_LENGTH = 8;
+    public static final Integer HANDSHAKE_INFO_HASH_BYTE_LENGTH = 20;
+    public static final Integer HANDSHAKE_PEER_ID_BYTE_LENGTH = 20;
+    public static final String HANDSHAKE_BITTORRENT_PROTOCOL_STR = "BitTorrent protocol";
+    public static final Integer HANDSHAKE_PEER_ID_INDEX_IN_VW_LIST = 4;
 }

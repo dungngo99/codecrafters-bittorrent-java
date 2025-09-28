@@ -4,18 +4,16 @@ import domain.Peer;
 import domain.ValueWrapper;
 import util.DigestUtil;
 import util.MapUtil;
-import util.ValueWrapperUtil;
 
-import java.io.IOException;
 import java.util.*;
 
 import static constants.Constant.*;
 
-public class ValueWrapperHelper {
+public class VWMapHelper {
 
     private final Map<?, ?> map;
 
-    public ValueWrapperHelper(Map<?, ?> map) {
+    public VWMapHelper(Map<?, ?> map) {
         this.map = map;
     }
 
@@ -41,25 +39,6 @@ public class ValueWrapperHelper {
 
     public byte[] getInfoPieces() {
         return MapUtil.getNestedKey(map, new String[]{INFO_KEY_INFO_CMD, INFO_PIECES_INFO_CMD}, new byte[]{});
-    }
-
-    public String getInfoHash(ValueWrapper vw) {
-        ValueWrapper infoVW = ValueWrapperUtil.getObjectFromMap(vw, INFO_KEY_INFO_CMD);
-        BEncoderV2 bEncoderV2 = new BEncoderV2(infoVW);
-        try {
-            byte[] infoBytes = bEncoderV2.encode();
-            return DigestUtil.calculateSHA1(infoBytes);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public String urlEncodeInfoHash(String infoHash) {
-        StringJoiner joiner = new StringJoiner(PERCENT_SIGN, PERCENT_SIGN, EMPTY_STRING);
-        for (int i = 0; i < infoHash.length(); i += 2) {
-            joiner.add(infoHash.substring(i, i + 2));
-        }
-        return joiner.toString();
     }
 
     public List<Peer> getPeers() {
@@ -107,18 +86,6 @@ public class ValueWrapperHelper {
             chars[i] = (char) bytes[i];
         }
         return new String(chars);
-    }
-
-    public String getSetPeerId() {
-        String peerId = System.getProperty(PEER_ID_KEY);
-        if (Objects.nonNull(peerId) && !peerId.isBlank()) {
-            return peerId;
-        }
-        byte[] bytes = new byte[PEER_ID_HEX_LENGTH];
-        new Random().nextBytes(bytes);
-        peerId = DigestUtil.formatHex(bytes);
-        System.setProperty(PEER_ID_KEY, peerId);
-        return peerId;
     }
 
     public Map<?, ?> getMap() {

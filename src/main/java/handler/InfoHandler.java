@@ -4,7 +4,7 @@ import domain.TorrentFile;
 import domain.ValueWrapper;
 import exception.ArgumentException;
 import service.BDecoderV2;
-import service.ValueWrapperHelper;
+import service.VWMapHelper;
 import util.DigestUtil;
 import util.FileUtil;
 import util.ValueWrapperUtil;
@@ -51,14 +51,14 @@ public class InfoHandler implements CommandHandler {
         TorrentFile.Info info = new TorrentFile.Info();
         metadata.setInfo(info);
 
-        ValueWrapperHelper torrentFileHelper = new ValueWrapperHelper(map);
+        VWMapHelper torrentFileHelper = new VWMapHelper(map);
         metadata.setAnnounce(torrentFileHelper.getAnnounce());
         metadata.setCreatedBy(torrentFileHelper.getCreatedBy());
         info.setLength(torrentFileHelper.getInfoLength());
         info.setName(torrentFileHelper.getInfoName());
         info.setPieceLength(torrentFileHelper.getInfoPieceLength());
         info.setPieces(torrentFileHelper.getInfoPieces());
-        info.setHash(torrentFileHelper.getInfoHash(vw));
+        info.setHash(ValueWrapperUtil.getInfoHashAsHex(vw));
         info.setPieceHashes(DigestUtil.formatPieceHashes(info.getPieces()));
 
         System.out.println(metadata);
