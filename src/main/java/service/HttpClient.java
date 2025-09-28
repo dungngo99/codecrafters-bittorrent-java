@@ -93,7 +93,9 @@ public class HttpClient {
         conn.setRequestProperty(HTTP_HEADER_CONNECTION_SCHEME, HTTP_HEADER_CONNECTION_SCHEME_CLOSE);
         HttpUtil.fillRequestPropertiesWithHeaders(conn, headers);
 
-        if (HttpMethod.PUT.name().equals(method) || HttpMethod.POST.name().equals(method) || HttpMethod.PATCH.name().equals(method)) {
+        if (HttpMethod.PUT.name().equals(method)
+                || HttpMethod.POST.name().equals(method)
+                || HttpMethod.PATCH.name().equals(method)) {
             byte[] payloadBytes;
             if (payload instanceof byte[]) {
                 payloadBytes = (byte[]) payload;

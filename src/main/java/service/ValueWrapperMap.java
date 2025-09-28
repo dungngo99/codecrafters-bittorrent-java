@@ -9,11 +9,11 @@ import java.util.*;
 
 import static constants.Constant.*;
 
-public class VWMapHelper {
+public class ValueWrapperMap {
 
     private final Map<?, ?> map;
 
-    public VWMapHelper(Map<?, ?> map) {
+    public ValueWrapperMap(Map<?, ?> map) {
         this.map = map;
     }
 
@@ -69,10 +69,6 @@ public class VWMapHelper {
             peer.setPort(Integer.parseInt(hex, RADIX_HEX_TO_INT));
         }
         return peers;
-    }
-
-    public Integer getInterval() {
-        return MapUtil.getKey(map, INTERVAL_PEERS_CMD, -1);
     }
 
     public String getFailureReason() {

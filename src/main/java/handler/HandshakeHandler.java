@@ -4,7 +4,6 @@ import domain.ValueWrapper;
 import enums.BEncodeTypeEnum;
 import enums.CommandTypeEnum;
 import exception.ArgumentException;
-import service.BDecoderV2;
 import util.ValueWrapperUtil;
 
 import java.io.IOException;
@@ -31,10 +30,10 @@ public class HandshakeHandler implements CommandHandler {
         String inputIpAddressPortNumber = args[1];
 
         CommandHandler commandHandler = CommandStore.getCommand(CommandTypeEnum.INFO.name().toLowerCase());
-        ValueWrapper infoVW = commandHandler.getValueWrapper(new String[]{torrentFilePath});
+        ValueWrapper torrentFileVW = commandHandler.getValueWrapper(new String[]{torrentFilePath});
         ValueWrapper inputIpAddressPortNumberVW = new ValueWrapper(BEncodeTypeEnum.STRING, inputIpAddressPortNumber);
         Map<String, ValueWrapper> handshakeVWMap = Map.of(
-                TORRENT_FILE_VALUE_WRAPPER_KEY, infoVW,
+                TORRENT_FILE_VALUE_WRAPPER_KEY, torrentFileVW,
                 HANDSHAKE_IP_PORT_VALUE_WRAPPER_KEY, inputIpAddressPortNumberVW);
         return new ValueWrapper(BEncodeTypeEnum.DICT, handshakeVWMap);
     }
@@ -46,7 +45,7 @@ public class HandshakeHandler implements CommandHandler {
             logger.warning("HandshakeHandler.handleValueWrapper(): invalid decoded value, ignore");
             return;
         }
-        byte[] handshakeByteStreams = ValueWrapperUtil.getHandshakeByteStream(vw);
+        byte[] handshakeByteStream = ValueWrapperUtil.getHandshakeByteStream(vw);
 
         String ipAddressPortNumber = (String) handshakeMap.get(HANDSHAKE_IP_PORT_VALUE_WRAPPER_KEY);
         String ipAddress = ipAddressPortNumber.split(COLON_SIGN)[HANDSHAKE_IP_ADDRESS_INDEX];
@@ -56,14 +55,14 @@ public class HandshakeHandler implements CommandHandler {
         try {
             socket = new Socket(ipAddress, Integer.parseInt(portNumber));
             OutputStream os = socket.getOutputStream();
-            os.write(handshakeByteStreams);
+            os.write(handshakeByteStream);
             os.flush();
 
             InputStream is = socket.getInputStream();
-            BDecoderV2 bDecoderV2 = new BDecoderV2(is.readAllBytes());
-            ValueWrapper handshakeVW = bDecoderV2.decodeHandshake();
+            ValueWrapper handshakeVW = ValueWrapperUtil.decodeHandshake(is);
             List<ValueWrapper> handshakeVWList = (List<ValueWrapper>) handshakeVW.getO();
-            System.out.println(handshakeVWList.get(HANDSHAKE_PEER_ID_INDEX_IN_VW_LIST).getO());
+            String peerId = (String) handshakeVWList.get(HANDSHAKE_PEER_ID_INDEX_IN_VW_LIST).getO();
+            System.out.println("Peer ID: " + peerId);
 
         } catch (IOException e) {
             logger.warning(String.format("HandshakeHandler.handleValueWrapper(): failed to init TCP connection due to %s: host=%s; port=%s, ignored",

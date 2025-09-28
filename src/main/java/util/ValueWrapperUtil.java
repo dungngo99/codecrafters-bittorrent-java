@@ -5,6 +5,7 @@ import enums.BEncodeTypeEnum;
 import service.BEncoderV2;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Logger;
@@ -24,14 +25,17 @@ public class ValueWrapperUtil {
             logger.warning("DecodeHandler: convert, null vw, ignore");
             return null;
         }
+
         BEncodeTypeEnum typeEnum = vw.getbEncodeType();
         if (Objects.equals(typeEnum, BEncodeTypeEnum.INTEGER)) {
             return vw.getO();
         }
+
         if (Objects.equals(typeEnum, BEncodeTypeEnum.STRING)) {
             // if use BDecoder, set needConvertString = false
             return needConvertString ? new String((byte[]) vw.getO(), StandardCharsets.UTF_8) : vw.getO();
         }
+
         if (Objects.equals(typeEnum, BEncodeTypeEnum.LIST)) {
             if (!(vw.getO() instanceof List<?>)) {
                 logger.warning("DecodeHandler: convert, object not BEncodeTypeEnum.LIST, ignore");
@@ -43,6 +47,7 @@ public class ValueWrapperUtil {
             }
             return list;
         }
+
         if (Objects.equals(typeEnum, BEncodeTypeEnum.DICT)) {
             if (!(vw.getO() instanceof Map<?, ?>)) {
                 logger.warning("DecodeHandler: convert, object not BEncodeTypeEnum.DICT, ignore");
@@ -111,9 +116,12 @@ public class ValueWrapperUtil {
         if (Objects.nonNull(peerId) && !peerId.isBlank()) {
             return peerId;
         }
-        byte[] bytes = new byte[PEER_ID_HEX_LENGTH];
-        new Random().nextBytes(bytes);
-        peerId = DigestUtil.formatHex(bytes);
+        Random random = new Random(System.currentTimeMillis());
+        StringBuilder sb = new StringBuilder();
+        for (int i=0; i<PEER_ID_LENGTH; i++) {
+            sb.append(random.nextInt(0, 10));
+        }
+        peerId = sb.toString();
         System.setProperty(PEER_ID_KEY, peerId);
         return peerId;
     }
@@ -144,9 +152,34 @@ public class ValueWrapperUtil {
         String clientPeerId = getSetPeerId();
         assert clientPeerId.length() == HANDSHAKE_PEER_ID_BYTE_LENGTH;
         for (int j=0; j<HANDSHAKE_PEER_ID_BYTE_LENGTH; j++) {
-            handshakeBytes[i++] = (byte) clientPeerId.charAt(j);
+            handshakeBytes[i++] = (byte) (clientPeerId.charAt(j) - '0');
         }
 
         return handshakeBytes;
+    }
+
+    public static ValueWrapper decodeHandshake(InputStream is) throws IOException {
+        List<ValueWrapper> list = new ArrayList<>();
+        ValueWrapper vw = new ValueWrapper(BEncodeTypeEnum.LIST, list);
+
+        list.add(new ValueWrapper(BEncodeTypeEnum.INTEGER, is.read()));
+
+        char[] bitTorrentChars = new char[HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH];
+        for (int j=0; j<HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH; j++) {
+            bitTorrentChars[j] = (char) is.read();
+        }
+        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, new String(bitTorrentChars)));
+
+        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, is.readNBytes(HANDSHAKE_RESERVED_BYTE_LENGTH)));
+
+        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, is.readNBytes(HANDSHAKE_INFO_HASH_BYTE_LENGTH)));
+
+        byte[] peerIdBytes = new byte[HANDSHAKE_PEER_ID_BYTE_LENGTH];
+        for (int j=0; j<HANDSHAKE_PEER_ID_BYTE_LENGTH; j++) {
+            peerIdBytes[j] = (byte) is.read();
+        }
+        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, DigestUtil.formatHex(peerIdBytes)));
+
+        return vw;
     }
 }

@@ -7,8 +7,6 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static constants.Constant.*;
-
 public class BDecoderV2 {
     private final byte[] bytes;
     private int i;
@@ -41,31 +39,6 @@ public class BDecoderV2 {
             return decodeString();
         }
         return null;
-    }
-
-    public ValueWrapper decodeHandshake() {
-        List<ValueWrapper> list = new ArrayList<>();
-        ValueWrapper vw = new ValueWrapper(BEncodeTypeEnum.LIST, list);
-
-        list.add(new ValueWrapper(BEncodeTypeEnum.INTEGER, (int) next()));
-
-        char[] bitTorrentChars = new char[HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH];
-        for (int j=0; j<HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH; j++) {
-            bitTorrentChars[j] = (char) next();
-        }
-        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, new String(bitTorrentChars)));
-
-        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, nextNBytes(HANDSHAKE_RESERVED_BYTE_LENGTH)));
-
-        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, nextNBytes(HANDSHAKE_INFO_HASH_BYTE_LENGTH)));
-
-        char[] peerIdChars = new char[HANDSHAKE_PEER_ID_BYTE_LENGTH];
-        for (int j=0; j<HANDSHAKE_PEER_ID_BYTE_LENGTH; j++) {
-            peerIdChars[j] = (char) next();
-        }
-        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, new String(peerIdChars)));
-
-        return vw;
     }
 
     private ValueWrapper decodeInteger() {

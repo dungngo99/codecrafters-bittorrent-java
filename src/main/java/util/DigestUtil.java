@@ -22,7 +22,7 @@ public class DigestUtil {
             // Convert byte array to a hexadecimal string
             return HexFormat.of().formatHex(hashBytes);
         } catch (NoSuchAlgorithmException e) {
-            logger.log(Level.SEVERE, "SHA-1 algorithm not found: " + e.getMessage());
+            logger.log(Level.SEVERE, "calculateSHA1AsHex: SHA-1 algorithm not found: " + e.getMessage());
             return null;
         }
     }
@@ -35,7 +35,7 @@ public class DigestUtil {
             // Compute then return the hash
             return sha1Digest.digest(bytes);
         } catch (NoSuchAlgorithmException e) {
-            logger.log(Level.SEVERE, "SHA-1 algorithm not found: " + e.getMessage());
+            logger.log(Level.SEVERE, "calculateSHA1AsBytes: SHA-1 algorithm not found: " + e.getMessage());
             return null;
         }
     }

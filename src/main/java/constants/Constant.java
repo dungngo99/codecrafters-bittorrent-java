@@ -65,7 +65,7 @@ public class Constant {
     public static final String HTTP_HEADER_CONNECTION_SCHEME = "Connection";
     public static final String HTTP_HEADER_CONNECTION_SCHEME_CLOSE = "Close";
     public static final String PEER_ID_KEY = "peer_id";
-    public static final Integer PEER_ID_HEX_LENGTH = 10;
+    public static final Integer PEER_ID_LENGTH = 20;
     public static final Integer PEER_BYTE_ARRAY_LENGTH = 6;
     public static final Integer PEER_IP_ADDRESS_BYTE_ARRAY_LENGTH = 4;
     public static final Integer PEER_PORT_NUMBER_BYTE_ARRAY_LENGTH = 2;
