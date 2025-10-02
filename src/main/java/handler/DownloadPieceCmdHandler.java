@@ -32,7 +32,7 @@ public class DownloadPieceCmdHandler implements CmdHandler {
     @Override
     public ValueWrapper getValueWrapper(String[] args) {
         if (Objects.isNull(args) || args.length < DEFAULT_PARAMS_SIZE_DOWNLOAD_PIECE_CMD) {
-            throw new ArgumentException("DownloadPieceHandler.getValueWrapper(): invalid params, throw ex: args=" + Arrays.toString(args));
+            throw new ArgumentException("DownloadPieceHandler.getValueWrapper(): invalid params, args=" + Arrays.toString(args));
         }
         String pieceOutputFilePath = args[1];
         String torrentFilePath = args[2];
@@ -46,7 +46,7 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         CmdHandler peersCmdHandler = CmdStore.getCmd(CmdTypeEnum.PEERS.name().toLowerCase());
         List<PeerInfo> peerList = (List<PeerInfo>) peersCmdHandler.handleValueWrapper(torrentFileVW);
         if (Objects.isNull(peerList) || peerList.isEmpty()) {
-            throw new PeerNotExistException("DownloadPieceHandler.getValueWrapper(): no peers exist, throw ex");
+            throw new PeerNotExistException("DownloadPieceHandler.getValueWrapper(): no peers exist");
         }
         PeerInfo peer = peerList.get(0);
         String ipAddressPortNumber = String.format(IP_ADDRESS_PORT_NUMBER_FORMAT, peer.getIp(), peer.getPort());
@@ -58,7 +58,7 @@ public class DownloadPieceCmdHandler implements CmdHandler {
                 TORRENT_FILE_VALUE_WRAPPER_KEY, torrentFileVW,
                 HANDSHAKE_IP_PORT_VALUE_WRAPPER_KEY, ipAddressPortNumberVW);
         ValueWrapper handshakeVW = new ValueWrapper(BEncodeTypeEnum.DICT, handshakeVWMap);
-        Map<String, Socket> socketMap = (Map<String, Socket>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
+        Map<String, ValueWrapper> socketMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
 
         // combine args, .torrent file info, socket info for next stage
         Map<String, ValueWrapper> downloadPieceVWMap = Map.of(
@@ -74,13 +74,14 @@ public class DownloadPieceCmdHandler implements CmdHandler {
     public Object handleValueWrapper(ValueWrapper vw) {
         Object o1 = ValueWrapperUtil.convertToObject(vw);
         if (!(o1 instanceof Map<?, ?> downloadPieceMap)) {
-            logger.warning("DownloadPieceCmdHandler.handleValueWrapper(): invalid decoded value, throw ex");
-            throw new ValueWrapperException("DownloadPieceCmdHandler.handleValueWrapper(): invalid decoded value");
+            logger.warning("invalid decoded value, throw ex");
+            throw new ValueWrapperException("DownloadPieceHandler.handleValueWrapper(): invalid decoded value");
         }
 
         Map<?, ?> torrentFileMap = (Map<?, ?>) downloadPieceMap.get(TORRENT_FILE_VALUE_WRAPPER_KEY);
         ValueWrapperMap vwMap = new ValueWrapperMap(torrentFileMap);
-        Integer pieceLength = vwMap.getInfoPieceLength();
+        Integer infoPieceLength = vwMap.getInfoPieceLength();
+        Integer infoLength = vwMap.getInfoLength();
         byte[] infoPieces = vwMap.getInfoPieces();
         List<String> pieceHashList = Arrays.stream(DigestUtil.formatPieceHashes(infoPieces)).toList();
 
@@ -93,43 +94,47 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         try {
             InputStream is = socket.getInputStream();
             OutputStream os = socket.getOutputStream();
-            PeerMessage piecesPeerMessage = PeerUtil.listenOwningPiecePeerMessage(is);
-            logger.info(String.format("DownloadPieceCmdHandler.handleValueWrapper(): listened for owning pieces=%s from peerId=%s", piecesPeerMessage, peerId));
+            PeerMessage piecesPeerMessage = PeerUtil.listenBitFieldPeerMessage(is);
+            logger.info(String.format("listened for bitfield peer message=%s from peerId=%s", piecesPeerMessage, peerId));
 
             PeerMessage interestedPeerMessage = PeerUtil.sendInterestedPeerMessage(os);
-            logger.info(String.format("DownloadPieceCmdHandler.handleValueWrapper(): sent interested peer message=%s from peerId=%s", interestedPeerMessage, peerId));
+            logger.info(String.format("sent interested peer message=%s from peerId=%s", interestedPeerMessage, peerId));
 
             PeerMessage unchokePeerMessage = PeerUtil.listenUnchokePeerMessage(is);
-            logger.info(String.format("DownloadPieceCmdHandler.handleValueWrapper(): listened unchoke peer message=%s from peerId=%s", unchokePeerMessage, peerId));
+            logger.info(String.format("listened unchoke peer message=%s from peerId=%s", unchokePeerMessage, peerId));
 
             int offset = 0;
+            int pieceLength = PeerUtil.calculatePieceLengthByIndex(pieceIndex, infoPieceLength, infoLength);
             while (offset < pieceLength) {
-                int length = offset + PEER_MESSAGE_BLOCK_SIZE <= pieceLength ? PEER_MESSAGE_BLOCK_SIZE : pieceLength-offset;
+                int length = offset + PEER_MESSAGE_BLOCK_SIZE <= pieceLength ? PEER_MESSAGE_BLOCK_SIZE : pieceLength - offset;
                 PeerMessage blockRequestPeerMessage = PeerUtil.sendBlockRequestPeerMessage(os, pieceIndex, offset, length);
-                logger.info(String.format("DownloadPieceCmdHandler.handleValueWrapper(): sent block request peer message=%s from peerId=%s, offset=%s", blockRequestPeerMessage, peerId, offset));
+                logger.info(String.format("sent request peer message=%s from peerId=%s, offset=%s", blockRequestPeerMessage, peerId, offset));
 
-                PeerMessage blockResponsePeerMessage = PeerUtil.listenBlockResponsePeerMessage(is);
-                logger.fine(String.format("DownloadPieceCmdHandler.handleValueWrapper(): listened block response peer message=%s from peerId=%s, offset=%s", blockResponsePeerMessage, peerId, offset));
+                PeerMessage piecePeerMessage = PeerUtil.listenPiecePeerMessage(is, pieceIndex, offset, length);
+                logger.fine(String.format("listened piece peer message=%s from peerId=%s, offset=%s", piecePeerMessage, peerId, offset));
 
-                byte[] payload = blockResponsePeerMessage.getPayload();
+                byte[] payload = piecePeerMessage.getPayload();
                 FileUtil.writeBytesToFile(outputFilePath, payload, Boolean.TRUE);
                 offset += length;
             }
 
             byte[] bytes = FileUtil.readAllBytesFromFile(outputFilePath);
             String downloadedPieceHash = DigestUtil.calculateSHA1AsHex(bytes);
-            if (pieceHashList.contains(downloadedPieceHash)) {
-                logger.info("DownloadPieceCmdHandler.handleValueWrapper(): verified the download piece hash against .torrent file piece hash");
+            String torrentFilePieceHash = pieceHashList.get(pieceIndex);
+            if (Objects.equals(downloadedPieceHash, torrentFilePieceHash)) {
+                logger.info("verified the download piece hash against .torrent file piece hash");
+            } else {
+                logger.warning("not matched the download piece hash against .torrent file piece hash");
             }
         } catch (IOException e) {
-            logger.warning(String.format("DownloadPieceCmdHandler.handleValueWrapper(): failed to download a piece from peerId=%s to file=%s; index=%s due to %s",
+            logger.warning(String.format("failed to download a piece from peerId=%s to file=%s; index=%s due to %s",
                     peerId, outputFilePath, pieceIndex, e.getMessage()));
             throw new ValueWrapperException(e);
         } finally {
             try {
                 socket.close();
             } catch (IOException e) {
-                logger.warning(String.format("HandshakeHandler.handleValueWrapper(): failed to close TCP connection from peerId=%s to file=%s; index=%s due to %s",
+                logger.warning(String.format("failed to close TCP connection from peerId=%s to file=%s; index=%s due to %s",
                         peerId, outputFilePath, pieceIndex, e.getMessage()));
             }
         }

@@ -25,7 +25,7 @@ public class PeersCmdHandler implements CmdHandler {
     @Override
     public ValueWrapper getValueWrapper(String[] args) {
         if (Objects.isNull(args) || args.length < DEFAULT_PARAMS_SIZE_PEERS_CMD) {
-            throw new ArgumentException("PeersHandler.getValueWrapper(): invalid params, ignore handling: args=" + Arrays.toString(args));
+            throw new ArgumentException("PeersCmdHandler.getValueWrapper(): invalid params, ignore handling: args=" + Arrays.toString(args));
         }
 
         // get .torrent file info from INFO cmd
@@ -37,8 +37,8 @@ public class PeersCmdHandler implements CmdHandler {
     public Object handleValueWrapper(ValueWrapper vw) {
         Object o = ValueWrapperUtil.convertToObject(vw);
         if (!(o instanceof Map<?, ?> map)) {
-            logger.warning("PeersHandler.handleValueWrapper(): invalid decoded value, ignore");
-            throw new ValueWrapperException("PeersHandler.handleValueWrapper(): invalid decoded value");
+            logger.warning("invalid decoded value, ignore");
+            throw new ValueWrapperException("PeersCmdHandler.handleValueWrapper(): invalid decoded value");
         }
 
         ValueWrapperMap torrentFileHelper = new ValueWrapperMap(map);
@@ -57,7 +57,7 @@ public class PeersCmdHandler implements CmdHandler {
         HttpRequestOption option = new HttpRequestOption.Builder().ofNeedUrlEncodeQueryParam(Boolean.FALSE).build();
         HttpResponse httpResponse = HttpClient.DEFAULT_HTTP_CLIENT.get(trackerUrl, Map.of(), queryParams, option);
         if (Objects.isNull(httpResponse) || !HttpUtil.isSuccessHttpRequest(httpResponse.getStatus())) {
-            logger.warning("PeersHandler.handleValueWrapper(): failed to call tracker server, status code=" + httpResponse.getStatus());
+            logger.warning("failed to call tracker server, status code=" + httpResponse.getStatus());
             return peerList;
         }
 
@@ -66,7 +66,7 @@ public class PeersCmdHandler implements CmdHandler {
         if (Objects.isNull(trackerVW)
                 || !Objects.equals(trackerVW.getbEncodeType(), BEncodeTypeEnum.DICT)
                 || !(trackerVW.getO() instanceof Map<?, ?> trackerVWMap)) {
-            logger.warning("PeersHandler.handleValueWrapper(): invalid tracker value wrapper, ignore parsing");
+            logger.warning("invalid tracker value wrapper, ignore parsing");
             return peerList;
         }
 

@@ -27,7 +27,7 @@ public class InfoCmdHandler implements CmdHandler {
     @Override
     public ValueWrapper getValueWrapper(String[] args) {
         if (Objects.isNull(args) || args.length < DEFAULT_PARAMS_SIZE_INFO_CMD) {
-            throw new ArgumentException("InfoHandler.getValueWrapper(): invalid params, ignore handling: args=" + Arrays.toString(args));
+            throw new ArgumentException("InfoCmdHandler.getValueWrapper(): invalid params, ignore handling: args=" + Arrays.toString(args));
         }
         String path = args[0];
         try {
@@ -38,16 +38,17 @@ public class InfoCmdHandler implements CmdHandler {
             BDecoderV2 bEncoderV2 = new BDecoderV2(byteArrayInputStream);
             return bEncoderV2.decode();
         } catch (IOException e) {
-            throw new RuntimeException("InfoHandler.getValueWrapper(): failed to cast to FileInputStream, ignore: args=" + Arrays.toString(args), e);
+            throw new RuntimeException("InfoCmdHandler.getValueWrapper(): failed to cast to FileInputStream, ignore: args=" + Arrays.toString(args), e);
         }
     }
 
     @Override
     public Object handleValueWrapper(ValueWrapper vw) {
         Object o = ValueWrapperUtil.convertToObject(vw);
-        if (!(o instanceof Map<?, ?> map)) {
-            logger.warning("InfoHandler.handleValueWrapper(): invalid decoded value, throw ex");
-            throw new ValueWrapperException("InfoHandler.handleValueWrapper(): invalid decoded value");
+        if (!(o instanceof Map<?, ?> map
+        )) {
+            logger.warning("invalid decoded value, throw ex");
+            throw new ValueWrapperException("InfoCmdHandler.handleValueWrapper(): invalid decoded value");
         }
         TorrentFile metadata = new TorrentFile();
         TorrentFile.Info info = new TorrentFile.Info();

@@ -6,7 +6,8 @@ public enum BEncodeTypeEnum {
     INTEGER(1, 'i'),
     STRING(2, null),
     LIST(3, 'l'),
-    DICT(4, 'd');
+    DICT(4, 'd'),
+    OBJECT(5, 'o');
 
     private final int value;
     private final Character indicator;

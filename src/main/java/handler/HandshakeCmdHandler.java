@@ -45,7 +45,7 @@ public class HandshakeCmdHandler implements CmdHandler {
     public Object handleValueWrapper(ValueWrapper vw) {
         Object o1 = ValueWrapperUtil.convertToObject(vw);
         if (!(o1 instanceof Map<?, ?> handshakeMap)) {
-            logger.warning("HandshakeHandler.handleValueWrapper(): invalid decoded value, throw ex");
+            logger.warning("invalid decoded value, throw ex");
             throw new ValueWrapperException("HandshakeHandler.handleValueWrapper(): invalid decoded value");
         }
         byte[] handshakeByteStream = PeerUtil.getHandshakeByteStream(vw);
@@ -54,10 +54,9 @@ public class HandshakeCmdHandler implements CmdHandler {
         String ipAddress = ipAddressPortNumber.split(COLON_SIGN)[HANDSHAKE_IP_ADDRESS_INDEX];
         String portNumber = ipAddressPortNumber.split(COLON_SIGN)[HANDSHAKE_PORT_NUMBER_INDEX];
 
-        Socket socket = null;
-        Map<String, Socket> connectionMap = new HashMap<>();
+        Map<String, ValueWrapper> connectionMap = new HashMap<>();
         try {
-            socket = new Socket(ipAddress, Integer.parseInt(portNumber));
+            Socket socket = new Socket(ipAddress, Integer.parseInt(portNumber));
             OutputStream os = socket.getOutputStream();
             os.write(handshakeByteStream);
             os.flush();
@@ -68,20 +67,11 @@ public class HandshakeCmdHandler implements CmdHandler {
             String peerId = (String) handshakeVWList.get(HANDSHAKE_PEER_ID_INDEX_IN_VW_LIST).getO();
             System.out.println("Peer ID: " + peerId);
 
-            connectionMap.put(peerId, socket);
+            connectionMap.put(peerId, new ValueWrapper(BEncodeTypeEnum.OBJECT, socket));
         } catch (IOException e) {
-            logger.warning(String.format("HandshakeHandler.handleValueWrapper(): failed to init TCP connection due to %s: host=%s; port=%s, throw ex",
+            logger.warning(String.format("failed to init TCP connection due to %s: host=%s; port=%s, throw ex",
                     e.getMessage(), ipAddress, portNumber));
             throw new PeerExchangeException(e);
-        } finally {
-            if (Objects.nonNull(socket)) {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    logger.warning(String.format("HandshakeHandler.handleValueWrapper(): failed to close TCP connection due to %s: host=%s; port=%s, ignored",
-                            e.getMessage(), ipAddress, portNumber));
-                }
-            }
         }
 
         return connectionMap;

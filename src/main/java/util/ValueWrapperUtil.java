@@ -34,6 +34,10 @@ public class ValueWrapperUtil {
             return needConvertString ? new String((byte[]) vw.getO(), StandardCharsets.UTF_8) : vw.getO();
         }
 
+        if (Objects.equals(typeEnum, BEncodeTypeEnum.OBJECT)) {
+            return vw.getO();
+        }
+
         if (Objects.equals(typeEnum, BEncodeTypeEnum.LIST)) {
             if (!(vw.getO() instanceof List<?>)) {
                 logger.warning("DecodeHandler: convert, object not BEncodeTypeEnum.LIST, ignore");

@@ -77,22 +77,24 @@ public class PeerUtil {
         int prefixedLength = peerMessage.getPrefixedLength();
         byte messageId = peerMessage.getMessageId();
         byte[] payload = peerMessage.getPayload();
-        byte[] bytes = new byte[prefixedLength];
+        byte[] bytes = new byte[PEER_MESSAGE_PREFIXED_LENGTH + prefixedLength];
         int i = 0;
-        ByteUtil.fill(bytes, ByteUtil.getFromInt(prefixedLength), i+=Integer.BYTES);
-        ByteUtil.fill(bytes, ByteUtil.getFromByte(messageId), i+=Byte.BYTES);
+        ByteUtil.fill(bytes, ByteUtil.getFromInt(prefixedLength), i);
+        i += Integer.BYTES;
+        ByteUtil.fill(bytes, ByteUtil.getFromByte(messageId), i);
+        i += Byte.BYTES;
         ByteUtil.fill(bytes, payload, i);
         return bytes;
     }
 
-    public static PeerMessage listenOwningPiecePeerMessage(InputStream is) throws IOException {
+    public static PeerMessage listenBitFieldPeerMessage(InputStream is) throws IOException {
         PeerMessage peerMessage = new PeerMessage();
-        byte[] prefixedLengthBytes = is.readNBytes(PEER_MESSAGE_PREFIX_LENGTH);
+        byte[] prefixedLengthBytes = is.readNBytes(PEER_MESSAGE_PREFIXED_LENGTH);
         int prefixedLength = ByteUtil.getAsInt(prefixedLengthBytes);
         peerMessage.setPrefixedLength(prefixedLength);
 
         int messageId = is.read();
-        assert messageId == PeerMessageType.OWNING_PIECE.getValue();
+        assert messageId == PeerMessageType.BITFIELD.getValue();
         peerMessage.setMessageId((byte) messageId);
 
         peerMessage.setPayload(is.readNBytes(prefixedLength - PEER_MESSAGE_ID_LENGTH));
@@ -101,7 +103,7 @@ public class PeerUtil {
 
     public static PeerMessage sendInterestedPeerMessage(OutputStream os) throws IOException {
         PeerMessage peerMessage = new PeerMessage();
-        peerMessage.setPrefixedLength(PEER_MESSAGE_INTERESTED_PREFIX_LENGTH);
+        peerMessage.setPrefixedLength(PEER_MESSAGE_INTERESTED_PREFIXED_LENGTH);
         peerMessage.setMessageId((byte) PeerMessageType.INTERESTED.getValue());
         peerMessage.setPayload(new byte[]{});
         SocketUtil.writeThenFlush(os, convertPeerMessageToBytes(peerMessage));
@@ -110,12 +112,12 @@ public class PeerUtil {
 
     public static PeerMessage listenUnchokePeerMessage(InputStream is) throws IOException {
         PeerMessage peerMessage = new PeerMessage();
-        byte[] prefixedLengthBytes = is.readNBytes(PEER_MESSAGE_PREFIX_LENGTH);
+        byte[] prefixedLengthBytes = is.readNBytes(PEER_MESSAGE_PREFIXED_LENGTH);
         int prefixedLength = ByteUtil.getAsInt(prefixedLengthBytes);
         peerMessage.setPrefixedLength(prefixedLength);
 
         int messageId = is.read();
-        assert messageId == PeerMessageType.UNCHOKED.getValue();
+        assert messageId == PeerMessageType.UNCHOKE.getValue();
         peerMessage.setMessageId((byte) messageId);
 
         peerMessage.setPayload(is.readNBytes(prefixedLength - PEER_MESSAGE_ID_LENGTH));
@@ -124,29 +126,48 @@ public class PeerUtil {
 
     public static PeerMessage sendBlockRequestPeerMessage(OutputStream os, int pieceIndex, int offset, int length) throws IOException {
         PeerMessage peerMessage = new PeerMessage();
-        peerMessage.setPrefixedLength(PEER_MESSAGE_BLOCK_REQUEST_PREFIX_LENGTH);
-        peerMessage.setMessageId((byte) PeerMessageType.BLOCK_REQUEST.getValue());
-        byte[] payload = new byte[PEER_MESSAGE_BLOCK_REQUEST_PREFIX_LENGTH - Byte.BYTES];
+        peerMessage.setPrefixedLength(PEER_MESSAGE_REQUEST_PREFIXED_LENGTH);
+        peerMessage.setMessageId((byte) PeerMessageType.REQUEST.getValue());
+        byte[] payload = new byte[PEER_MESSAGE_REQUEST_PREFIXED_LENGTH - Byte.BYTES];
         int i = 0;
-        ByteUtil.fill(payload, ByteUtil.getFromInt(pieceIndex), i+=Integer.BYTES);
-        ByteUtil.fill(payload, ByteUtil.getFromInt(offset), i+=Integer.BYTES);
+        ByteUtil.fill(payload, ByteUtil.getFromInt(pieceIndex), i);
+        i += Integer.BYTES;
+        ByteUtil.fill(payload, ByteUtil.getFromInt(offset), i);
+        i += Integer.BYTES;
         ByteUtil.fill(payload, ByteUtil.getFromInt(length), i);
         peerMessage.setPayload(payload);
         SocketUtil.writeThenFlush(os, convertPeerMessageToBytes(peerMessage));
         return peerMessage;
     }
 
-    public static PeerMessage listenBlockResponsePeerMessage(InputStream is) throws IOException {
+    public static PeerMessage listenPiecePeerMessage(InputStream is, int pieceIndex, int offset, int pieceLength) throws IOException {
         PeerMessage peerMessage = new PeerMessage();
-        byte[] prefixedLengthBytes = is.readNBytes(PEER_MESSAGE_PREFIX_LENGTH);
+        byte[] prefixedLengthBytes = is.readNBytes(PEER_MESSAGE_PREFIXED_LENGTH);
         int prefixedLength = ByteUtil.getAsInt(prefixedLengthBytes);
         peerMessage.setPrefixedLength(prefixedLength);
 
         int messageId = is.read();
-        assert messageId == PeerMessageType.BLOCK_RESPONSE.getValue();
+        assert messageId == PeerMessageType.PIECE.getValue();
         peerMessage.setMessageId((byte) messageId);
 
-        peerMessage.setPayload(is.readNBytes(prefixedLength - PEER_MESSAGE_ID_LENGTH));
+        byte[] pieceIndexBytes = is.readNBytes(Integer.BYTES);
+        int pieceIndex_ = ByteUtil.getAsInt(pieceIndexBytes);
+        assert pieceIndex_ == pieceIndex;
+
+        byte[] offsetBytes = is.readNBytes(Integer.BYTES);
+        int offset_ = ByteUtil.getAsInt(offsetBytes);
+        assert offset_ == offset;
+
+        int pieceLength_ = prefixedLength - PEER_MESSAGE_ID_LENGTH - Integer.BYTES - Integer.BYTES;
+        assert pieceLength_ == pieceLength;
+        peerMessage.setPayload(is.readNBytes(pieceLength));
         return peerMessage;
+    }
+
+    public static int calculatePieceLengthByIndex(int pieceIndex, int infoPieceLength, int infoLength) {
+        int maxPieceIndex = (int) (Math.ceil(infoLength * 1.0 / infoPieceLength) -1);
+        return maxPieceIndex == pieceIndex
+                ? infoLength - infoPieceLength * maxPieceIndex
+                : infoPieceLength;
     }
 }

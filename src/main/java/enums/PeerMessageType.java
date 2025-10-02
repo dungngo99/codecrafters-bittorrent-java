@@ -1,11 +1,27 @@
 package enums;
 
+/**
+ * The possible values are:
+ * 0 - choke
+ * 1 - unchoke
+ * 2 - interested
+ * 3 - not interested
+ * 4 - have
+ * 5 - bitfield
+ * 6 - request
+ * 7 - piece
+ * 8 - cancel
+ */
 public enum PeerMessageType {
-    OWNING_PIECE(5),
+    CHOKE(0),
+    UNCHOKE(1),
     INTERESTED(2),
-    UNCHOKED(1),
-    BLOCK_REQUEST(6),
-    BLOCK_RESPONSE(7);
+    NOT_INTERESTED(3),
+    HAVE(4),
+    BITFIELD(5),
+    REQUEST(6),
+    PIECE(7),
+    CANCEL(8);
 
     private final int value;
 

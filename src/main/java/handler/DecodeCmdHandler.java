@@ -9,7 +9,7 @@ public class DecodeCmdHandler implements CmdHandler {
     @Override
     public ValueWrapper getValueWrapper(String[] args) {
         if (args == null || args.length == 0) {
-            throw new RuntimeException("DecodeHandler: handle, invalid args");
+            throw new RuntimeException("DecodeCmdHandler.getValueWrapper(): handle, invalid args");
         }
 
         // decode the b-encoded input string

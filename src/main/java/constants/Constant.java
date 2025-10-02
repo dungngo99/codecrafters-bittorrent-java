@@ -84,9 +84,9 @@ public class Constant {
     public static final String HANDSHAKE_BITTORRENT_PROTOCOL_STR = "BitTorrent protocol";
     public static final Integer HANDSHAKE_PEER_ID_INDEX_IN_VW_LIST = 4;
     public static final String IP_ADDRESS_PORT_NUMBER_FORMAT = "%s:%s";
-    public static final Integer PEER_MESSAGE_PREFIX_LENGTH = 4;
+    public static final Integer PEER_MESSAGE_PREFIXED_LENGTH = 4;
     public static final Integer PEER_MESSAGE_ID_LENGTH = 1;
     public static final Integer PEER_MESSAGE_BLOCK_SIZE = 16384;
-    public static final Integer PEER_MESSAGE_INTERESTED_PREFIX_LENGTH = 1;
-    public static final Integer PEER_MESSAGE_BLOCK_REQUEST_PREFIX_LENGTH = 13;
+    public static final Integer PEER_MESSAGE_INTERESTED_PREFIXED_LENGTH = 1;
+    public static final Integer PEER_MESSAGE_REQUEST_PREFIXED_LENGTH = 13;
 }

@@ -19,7 +19,7 @@ public class CmdStore {
     public static CmdHandler getCmd(String cmd) {
         CmdHandler cmdHandler = store.get(cmd);
         if (Objects.isNull(cmdHandler)) {
-            throw new InvalidCmdException(String.format("not found cmd=[%s]", cmd));
+            throw new InvalidCmdException(String.format("CmdStore.getCmd(): not found cmd=[%s]", cmd));
         }
         return cmdHandler;
     }
