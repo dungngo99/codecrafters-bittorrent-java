@@ -5,13 +5,11 @@ import enums.BEncodeTypeEnum;
 import service.BEncoderV2;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Logger;
 
 import static constants.Constant.*;
-import static constants.Constant.HANDSHAKE_RESERVED_BYTE_LENGTH;
 
 public class ValueWrapperUtil {
     private static final Logger logger = Logger.getLogger(ValueWrapperUtil.class.getName());
@@ -124,62 +122,5 @@ public class ValueWrapperUtil {
         peerId = sb.toString();
         System.setProperty(PEER_ID_KEY, peerId);
         return peerId;
-    }
-
-    public static byte[] getHandshakeByteStream(ValueWrapper vw) {
-        int length = HANDSHAKE_HEADER_BYTE_LENGTH
-                + HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH
-                + HANDSHAKE_RESERVED_BYTE_LENGTH
-                + HANDSHAKE_INFO_HASH_BYTE_LENGTH
-                + HANDSHAKE_PEER_ID_BYTE_LENGTH;
-        byte[] handshakeBytes = new byte[length];
-
-        int i = 0;
-        handshakeBytes[i++] = HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH.byteValue();
-
-        for (int j=0; j<HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH; j++) {
-            handshakeBytes[i++] = (byte) HANDSHAKE_BITTORRENT_PROTOCOL_STR.charAt(j);
-        }
-
-        i += HANDSHAKE_RESERVED_BYTE_LENGTH;
-
-        byte[] infoHashBytes = getInfoHashAsBytes(vw);
-        assert infoHashBytes.length == HANDSHAKE_INFO_HASH_BYTE_LENGTH;
-        for (int j=0; j<HANDSHAKE_INFO_HASH_BYTE_LENGTH; j++) {
-            handshakeBytes[i++] = infoHashBytes[j];
-        }
-
-        String clientPeerId = getSetPeerId();
-        assert clientPeerId.length() == HANDSHAKE_PEER_ID_BYTE_LENGTH;
-        for (int j=0; j<HANDSHAKE_PEER_ID_BYTE_LENGTH; j++) {
-            handshakeBytes[i++] = (byte) (clientPeerId.charAt(j) - '0');
-        }
-
-        return handshakeBytes;
-    }
-
-    public static ValueWrapper decodeHandshake(InputStream is) throws IOException {
-        List<ValueWrapper> list = new ArrayList<>();
-        ValueWrapper vw = new ValueWrapper(BEncodeTypeEnum.LIST, list);
-
-        list.add(new ValueWrapper(BEncodeTypeEnum.INTEGER, is.read()));
-
-        char[] bitTorrentChars = new char[HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH];
-        for (int j=0; j<HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH; j++) {
-            bitTorrentChars[j] = (char) is.read();
-        }
-        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, new String(bitTorrentChars)));
-
-        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, is.readNBytes(HANDSHAKE_RESERVED_BYTE_LENGTH)));
-
-        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, is.readNBytes(HANDSHAKE_INFO_HASH_BYTE_LENGTH)));
-
-        byte[] peerIdBytes = new byte[HANDSHAKE_PEER_ID_BYTE_LENGTH];
-        for (int j=0; j<HANDSHAKE_PEER_ID_BYTE_LENGTH; j++) {
-            peerIdBytes[j] = (byte) is.read();
-        }
-        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, DigestUtil.formatHex(peerIdBytes)));
-
-        return vw;
     }
 }

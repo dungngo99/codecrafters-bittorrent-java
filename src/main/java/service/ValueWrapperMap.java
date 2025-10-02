@@ -1,6 +1,6 @@
 package service;
 
-import domain.Peer;
+import domain.PeerInfo;
 import domain.ValueWrapper;
 import util.DigestUtil;
 import util.MapUtil;
@@ -41,8 +41,8 @@ public class ValueWrapperMap {
         return MapUtil.getNestedKey(map, new String[]{INFO_KEY_INFO_CMD, INFO_PIECES_INFO_CMD}, new byte[]{});
     }
 
-    public List<Peer> getPeers() {
-        List<Peer> peers = new ArrayList<>();
+    public List<PeerInfo> getPeers() {
+        List<PeerInfo> peers = new ArrayList<>();
         ValueWrapper peerVW = MapUtil.getKey(map, PEERS_CMD, null);
         if (Objects.isNull(peerVW)) {
             return peers;
@@ -50,7 +50,7 @@ public class ValueWrapperMap {
 
         byte[] bytes = (byte[]) peerVW.getO();
         for (int i = 0; i < bytes.length; i += PEER_BYTE_ARRAY_LENGTH) {
-            Peer peer = new Peer();
+            PeerInfo peer = new PeerInfo();
             peers.add(peer);
 
             // parse ip address

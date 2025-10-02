@@ -2,7 +2,7 @@ package domain;
 
 import constants.Constant;
 
-public class Peer {
+public class PeerInfo {
     private String ip;
     private Integer port;
 

@@ -2,35 +2,38 @@ package handler;
 
 import domain.ValueWrapper;
 import enums.BEncodeTypeEnum;
-import enums.CommandTypeEnum;
+import enums.CmdTypeEnum;
 import exception.ArgumentException;
+import exception.PeerExchangeException;
+import exception.ValueWrapperException;
+import util.PeerUtil;
 import util.ValueWrapperUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static constants.Constant.*;
 
-public class HandshakeHandler implements CommandHandler {
-    private static final Logger logger = Logger.getLogger(HandshakeHandler.class.getName());
+public class HandshakeCmdHandler implements CmdHandler {
+    private static final Logger logger = Logger.getLogger(HandshakeCmdHandler.class.getName());
 
     @Override
     public ValueWrapper getValueWrapper(String[] args) {
         if (Objects.isNull(args) || args.length < DEFAULT_PARAMS_SIZE_HANDSHAKE_CMD) {
-            throw new ArgumentException("HandshakeHandler.getValueWrapper(): invalid params, ignore handling: args=" + Arrays.toString(args));
+            throw new ArgumentException("HandshakeHandler.getValueWrapper(): invalid params: args=" + Arrays.toString(args));
         }
         String torrentFilePath = args[0];
         String inputIpAddressPortNumber = args[1];
 
-        CommandHandler commandHandler = CommandStore.getCommand(CommandTypeEnum.INFO.name().toLowerCase());
-        ValueWrapper torrentFileVW = commandHandler.getValueWrapper(new String[]{torrentFilePath});
+        // get .torrent file info from INFO cmd
+        CmdHandler infoCmdHandler = CmdStore.getCmd(CmdTypeEnum.INFO.name().toLowerCase());
+        ValueWrapper torrentFileVW = infoCmdHandler.getValueWrapper(new String[]{torrentFilePath});
+
+        // combine args and .torrent file info for next stage
         ValueWrapper inputIpAddressPortNumberVW = new ValueWrapper(BEncodeTypeEnum.STRING, inputIpAddressPortNumber);
         Map<String, ValueWrapper> handshakeVWMap = Map.of(
                 TORRENT_FILE_VALUE_WRAPPER_KEY, torrentFileVW,
@@ -39,19 +42,20 @@ public class HandshakeHandler implements CommandHandler {
     }
 
     @Override
-    public void handleValueWrapper(ValueWrapper vw) {
+    public Object handleValueWrapper(ValueWrapper vw) {
         Object o1 = ValueWrapperUtil.convertToObject(vw);
         if (!(o1 instanceof Map<?, ?> handshakeMap)) {
-            logger.warning("HandshakeHandler.handleValueWrapper(): invalid decoded value, ignore");
-            return;
+            logger.warning("HandshakeHandler.handleValueWrapper(): invalid decoded value, throw ex");
+            throw new ValueWrapperException("HandshakeHandler.handleValueWrapper(): invalid decoded value");
         }
-        byte[] handshakeByteStream = ValueWrapperUtil.getHandshakeByteStream(vw);
+        byte[] handshakeByteStream = PeerUtil.getHandshakeByteStream(vw);
 
         String ipAddressPortNumber = (String) handshakeMap.get(HANDSHAKE_IP_PORT_VALUE_WRAPPER_KEY);
         String ipAddress = ipAddressPortNumber.split(COLON_SIGN)[HANDSHAKE_IP_ADDRESS_INDEX];
         String portNumber = ipAddressPortNumber.split(COLON_SIGN)[HANDSHAKE_PORT_NUMBER_INDEX];
 
         Socket socket = null;
+        Map<String, Socket> connectionMap = new HashMap<>();
         try {
             socket = new Socket(ipAddress, Integer.parseInt(portNumber));
             OutputStream os = socket.getOutputStream();
@@ -59,14 +63,16 @@ public class HandshakeHandler implements CommandHandler {
             os.flush();
 
             InputStream is = socket.getInputStream();
-            ValueWrapper handshakeVW = ValueWrapperUtil.decodeHandshake(is);
+            ValueWrapper handshakeVW = PeerUtil.decodeHandshake(is);
             List<ValueWrapper> handshakeVWList = (List<ValueWrapper>) handshakeVW.getO();
             String peerId = (String) handshakeVWList.get(HANDSHAKE_PEER_ID_INDEX_IN_VW_LIST).getO();
             System.out.println("Peer ID: " + peerId);
 
+            connectionMap.put(peerId, socket);
         } catch (IOException e) {
-            logger.warning(String.format("HandshakeHandler.handleValueWrapper(): failed to init TCP connection due to %s: host=%s; port=%s, ignored",
+            logger.warning(String.format("HandshakeHandler.handleValueWrapper(): failed to init TCP connection due to %s: host=%s; port=%s, throw ex",
                     e.getMessage(), ipAddress, portNumber));
+            throw new PeerExchangeException(e);
         } finally {
             if (Objects.nonNull(socket)) {
                 try {
@@ -77,5 +83,7 @@ public class HandshakeHandler implements CommandHandler {
                 }
             }
         }
+
+        return connectionMap;
     }
 }

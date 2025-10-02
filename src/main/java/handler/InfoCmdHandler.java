@@ -3,6 +3,7 @@ package handler;
 import domain.TorrentFile;
 import domain.ValueWrapper;
 import exception.ArgumentException;
+import exception.ValueWrapperException;
 import service.BDecoderV2;
 import service.ValueWrapperMap;
 import util.DigestUtil;
@@ -20,8 +21,8 @@ import java.util.logging.Logger;
 
 import static constants.Constant.DEFAULT_PARAMS_SIZE_INFO_CMD;
 
-public class InfoHandler implements CommandHandler {
-    private static final Logger logger = Logger.getLogger(InfoHandler.class.getName());
+public class InfoCmdHandler implements CmdHandler {
+    private static final Logger logger = Logger.getLogger(InfoCmdHandler.class.getName());
 
     @Override
     public ValueWrapper getValueWrapper(String[] args) {
@@ -30,6 +31,7 @@ public class InfoHandler implements CommandHandler {
         }
         String path = args[0];
         try {
+            // read and decode .torrent file locally
             File file = FileUtil.getFile(path);
             FileInputStream fileInputStream = new FileInputStream(file.getAbsoluteFile());
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(fileInputStream.readAllBytes());
@@ -41,11 +43,11 @@ public class InfoHandler implements CommandHandler {
     }
 
     @Override
-    public void handleValueWrapper(ValueWrapper vw) {
+    public Object handleValueWrapper(ValueWrapper vw) {
         Object o = ValueWrapperUtil.convertToObject(vw);
         if (!(o instanceof Map<?, ?> map)) {
-            logger.warning("InfoHandler.handleValueWrapper(): invalid decoded value, ignore");
-            return;
+            logger.warning("InfoHandler.handleValueWrapper(): invalid decoded value, throw ex");
+            throw new ValueWrapperException("InfoHandler.handleValueWrapper(): invalid decoded value");
         }
         TorrentFile metadata = new TorrentFile();
         TorrentFile.Info info = new TorrentFile.Info();
@@ -62,5 +64,7 @@ public class InfoHandler implements CommandHandler {
         info.setPieceHashes(DigestUtil.formatPieceHashes(info.getPieces()));
 
         System.out.println(metadata);
+
+        return metadata;
     }
 }

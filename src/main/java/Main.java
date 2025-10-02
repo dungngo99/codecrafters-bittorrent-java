@@ -1,6 +1,6 @@
 import domain.ValueWrapper;
-import handler.CommandHandler;
-import handler.CommandStore;
+import handler.CmdHandler;
+import handler.CmdStore;
 
 import java.util.Arrays;
 
@@ -9,11 +9,11 @@ public class Main {
         if (args.length == 0) {
             return;
         }
-        String command = args[0];
+        String cmd = args[0];
         try {
-            CommandHandler commandHandler = CommandStore.getCommand(command);
-            ValueWrapper vw = commandHandler.getValueWrapper(Arrays.copyOfRange(args, 1, args.length));
-            commandHandler.handleValueWrapper(vw);
+            CmdHandler cmdHandler = CmdStore.getCmd(cmd);
+            ValueWrapper vw = cmdHandler.getValueWrapper(Arrays.copyOfRange(args, 1, args.length));
+            cmdHandler.handleValueWrapper(vw);
         } catch(RuntimeException e) {
             System.out.println(e.getMessage());
         }
