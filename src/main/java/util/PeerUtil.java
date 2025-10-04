@@ -170,4 +170,8 @@ public class PeerUtil {
                 ? infoLength - infoPieceLength * maxPieceIndex
                 : infoPieceLength;
     }
+
+    public static String formatPieceOutputFilepath(String peerId, Integer pieceIndex) {
+        return String.format(PIECE_OUTPUT_FILE_PATH_FORMAT, peerId, pieceIndex);
+    }
 }

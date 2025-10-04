@@ -20,7 +20,7 @@ public class ValueWrapperUtil {
 
     public static Object convertToObject(ValueWrapper vw, boolean needConvertString) {
         if (Objects.isNull(vw)) {
-            logger.warning("DecodeHandler: convert, null vw, ignore");
+            logger.warning("null vw, ignore conversion");
             return null;
         }
 
@@ -40,7 +40,7 @@ public class ValueWrapperUtil {
 
         if (Objects.equals(typeEnum, BEncodeTypeEnum.LIST)) {
             if (!(vw.getO() instanceof List<?>)) {
-                logger.warning("DecodeHandler: convert, object not BEncodeTypeEnum.LIST, ignore");
+                logger.warning("object not BEncodeTypeEnum.LIST, ignore conversion");
                 return null;
             }
             List<Object> list = new ArrayList<>();
@@ -52,7 +52,7 @@ public class ValueWrapperUtil {
 
         if (Objects.equals(typeEnum, BEncodeTypeEnum.DICT)) {
             if (!(vw.getO() instanceof Map<?, ?>)) {
-                logger.warning("DecodeHandler: convert, object not BEncodeTypeEnum.DICT, ignore");
+                logger.warning("object not BEncodeTypeEnum.DICT, ignore conversion");
                 return null;
             }
             Map<String, Object> map = new HashMap<>();
@@ -126,5 +126,30 @@ public class ValueWrapperUtil {
         peerId = sb.toString();
         System.setProperty(PEER_ID_KEY, peerId);
         return peerId;
+    }
+
+    public static void modifyVWMap(ValueWrapper vw, String key, Object o) {
+        if (Objects.isNull(vw)) {
+            logger.warning("null vw, ignore conversion");
+            return;
+        }
+
+        if (!BEncodeTypeEnum.isDict(vw.getbEncodeType())) {
+            return;
+        }
+
+        Map<String, ValueWrapper> map = (Map<String, ValueWrapper>) vw.getO();
+        for (Map.Entry<String, ValueWrapper> entry: map.entrySet()) {
+            String entryKey = entry.getKey();
+            ValueWrapper entryVW = entry.getValue();
+
+            if (Objects.equals(entryKey, key)) {
+                ValueWrapper newVW = new ValueWrapper(entryVW.getbEncodeType(), o);
+                map.put(entryKey, newVW);
+                return;
+            }
+
+            modifyVWMap(entryVW, key, o);
+        }
     }
 }

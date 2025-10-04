@@ -33,6 +33,10 @@ public enum BEncodeTypeEnum {
         return Objects.equals(c, DICT.indicator);
     }
 
+    public static boolean isDict(BEncodeTypeEnum bEncodeTypeEnum) {
+        return Objects.nonNull(bEncodeTypeEnum) && DICT.equals(bEncodeTypeEnum);
+    }
+
     public int getValue() {
         return value;
     }

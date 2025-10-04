@@ -6,6 +6,7 @@ import domain.ValueWrapper;
 import enums.BEncodeTypeEnum;
 import enums.CmdTypeEnum;
 import exception.ArgumentException;
+import exception.DownloadPieceException;
 import exception.PeerNotExistException;
 import exception.ValueWrapperException;
 import service.ValueWrapperMap;
@@ -86,7 +87,7 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         List<String> pieceHashList = Arrays.stream(DigestUtil.formatPieceHashes(infoPieces)).toList();
 
         Map<String, Socket> socketMap = (Map<String, Socket>) downloadPieceMap.get(DOWNLOAD_PIECE_VALUE_WRAPPER_KEY);
-        String outputFilePath = (String) downloadPieceMap.get(DOWNLOAD_PIECE_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY);
+        String pieceOutputFilePath = (String) downloadPieceMap.get(DOWNLOAD_PIECE_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY);
         Integer pieceIndex = (Integer) downloadPieceMap.get(DOWNLOAD_PIECE_INDEX_VALUE_WRAPPER_KEY);
         String peerId = socketMap.keySet().stream().findFirst().get();
         Socket socket = socketMap.values().stream().findFirst().get();
@@ -114,11 +115,11 @@ public class DownloadPieceCmdHandler implements CmdHandler {
                 logger.fine(String.format("listened piece peer message=%s from peerId=%s, offset=%s", piecePeerMessage, peerId, offset));
 
                 byte[] payload = piecePeerMessage.getPayload();
-                FileUtil.writeBytesToFile(outputFilePath, payload, Boolean.TRUE);
+                FileUtil.writeBytesToFile(pieceOutputFilePath, payload, Boolean.TRUE);
                 offset += length;
             }
 
-            byte[] bytes = FileUtil.readAllBytesFromFile(outputFilePath);
+            byte[] bytes = FileUtil.readAllBytesFromFile(pieceOutputFilePath);
             String downloadedPieceHash = DigestUtil.calculateSHA1AsHex(bytes);
             String torrentFilePieceHash = pieceHashList.get(pieceIndex);
             if (Objects.equals(downloadedPieceHash, torrentFilePieceHash)) {
@@ -128,14 +129,14 @@ public class DownloadPieceCmdHandler implements CmdHandler {
             }
         } catch (IOException e) {
             logger.warning(String.format("failed to download a piece from peerId=%s to file=%s; index=%s due to %s",
-                    peerId, outputFilePath, pieceIndex, e.getMessage()));
-            throw new ValueWrapperException(e);
+                    peerId, pieceOutputFilePath, pieceIndex, e.getMessage()));
+            throw new DownloadPieceException(e);
         } finally {
             try {
                 socket.close();
             } catch (IOException e) {
                 logger.warning(String.format("failed to close TCP connection from peerId=%s to file=%s; index=%s due to %s",
-                        peerId, outputFilePath, pieceIndex, e.getMessage()));
+                        peerId, pieceOutputFilePath, pieceIndex, e.getMessage()));
             }
         }
 

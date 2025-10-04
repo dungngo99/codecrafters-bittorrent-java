@@ -34,4 +34,9 @@ public class FileUtil {
         FileInputStream fileInputStream = new FileInputStream(file);
         return fileInputStream.readAllBytes();
     }
+
+    public static boolean deleteFile(String path) {
+        File file = getFile(path);
+        return file.delete();
+    }
 }

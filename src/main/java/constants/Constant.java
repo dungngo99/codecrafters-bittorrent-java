@@ -11,6 +11,7 @@ public class Constant {
     public static final Integer DEFAULT_PARAMS_SIZE_PEERS_CMD = 1;
     public static final Integer DEFAULT_PARAMS_SIZE_HANDSHAKE_CMD = 2;
     public static final Integer DEFAULT_PARAMS_SIZE_DOWNLOAD_PIECE_CMD = 4;
+    public static final Integer DEFAULT_PARAMS_SIZE_DOWNLOAD_CMD = 3;
     public static final String ANNOUNCE_KEY_INFO_CMD = "announce";
     public static final String CREATED_BY_KEY_INFO_CMD = "created by";
     public static final String INFO_KEY_INFO_CMD = "info";
@@ -89,4 +90,5 @@ public class Constant {
     public static final Integer PEER_MESSAGE_BLOCK_SIZE = 16384;
     public static final Integer PEER_MESSAGE_INTERESTED_PREFIXED_LENGTH = 1;
     public static final Integer PEER_MESSAGE_REQUEST_PREFIXED_LENGTH = 13;
+    public static final String PIECE_OUTPUT_FILE_PATH_FORMAT = "piece_%s_%s";
 }
