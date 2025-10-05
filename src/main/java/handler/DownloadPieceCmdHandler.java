@@ -49,7 +49,13 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         if (Objects.isNull(peerList) || peerList.isEmpty()) {
             throw new PeerNotExistException("DownloadPieceHandler.getValueWrapper(): no peers exist");
         }
-        PeerInfo peer = peerList.get(0);
+        Integer peerIndex;
+        if (args.length == PARAMS_SIZE_DOWNLOAD_PIECE_CMD_WITH_PEER_INDEX) {
+            peerIndex = Integer.valueOf(args[4]);
+        } else {
+            peerIndex = PeerUtil.randomizePeerBySize(peerList.size());
+        }
+        PeerInfo peer = peerList.get(peerIndex);
         String ipAddressPortNumber = String.format(IP_ADDRESS_PORT_NUMBER_FORMAT, peer.getIp(), peer.getPort());
 
         // establish a TCP/IP connection with a peer then perform a handshake

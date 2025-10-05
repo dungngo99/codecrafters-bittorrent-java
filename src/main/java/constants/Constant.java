@@ -11,6 +11,7 @@ public class Constant {
     public static final Integer DEFAULT_PARAMS_SIZE_PEERS_CMD = 1;
     public static final Integer DEFAULT_PARAMS_SIZE_HANDSHAKE_CMD = 2;
     public static final Integer DEFAULT_PARAMS_SIZE_DOWNLOAD_PIECE_CMD = 4;
+    public static final Integer PARAMS_SIZE_DOWNLOAD_PIECE_CMD_WITH_PEER_INDEX = 5;
     public static final Integer DEFAULT_PARAMS_SIZE_DOWNLOAD_CMD = 3;
     public static final String ANNOUNCE_KEY_INFO_CMD = "announce";
     public static final String CREATED_BY_KEY_INFO_CMD = "created by";
@@ -91,4 +92,6 @@ public class Constant {
     public static final Integer PEER_MESSAGE_REQUEST_PREFIXED_LENGTH = 13;
     public static final String PIECE_OUTPUT_FILE_PATH_FORMAT = "piece_%s";
     public static final String PIECE_OUTPUT_FILE_OPTION = "-o";
+    public static final String DOWNLOAD_JOB_THREAD_NAME = "downloadJob::%s";
+    public static final Long DOWNLOAD_JOB_THREAD_BUSY_SPIN_MS = 100L;
 }

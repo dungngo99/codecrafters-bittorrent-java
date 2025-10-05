@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import static constants.Constant.*;
 import static constants.Constant.HANDSHAKE_PEER_ID_BYTE_LENGTH;
@@ -173,5 +174,10 @@ public class PeerUtil {
 
     public static String formatPieceOutputFilepath(Integer pieceIndex) {
         return String.format(PIECE_OUTPUT_FILE_PATH_FORMAT, pieceIndex);
+    }
+
+    public static Integer randomizePeerBySize(Integer peerSize) {
+        Random random = new Random();
+        return random.nextInt(peerSize);
     }
 }
