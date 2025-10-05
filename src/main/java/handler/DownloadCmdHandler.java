@@ -124,8 +124,8 @@ public class DownloadCmdHandler implements CmdHandler {
     private void createDownloadRunnable0(ConcurrentLinkedQueue<DownloadJob> queue, CountDownLatch countDownLatch, int peerIndex) {
         while (true) {
             try {
-                boolean isBreak = createDownloadRunnable1(queue, countDownLatch, peerIndex);
-                if (isBreak) {
+                boolean shouldExit = createDownloadRunnable1(queue, countDownLatch, peerIndex);
+                if (shouldExit) {
                     break;
                 }
             } catch (Exception e) {
