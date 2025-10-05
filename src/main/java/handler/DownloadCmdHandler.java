@@ -129,7 +129,6 @@ public class DownloadCmdHandler implements CmdHandler {
                     break;
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 logger.warning(String.format("failed to run download job: count=%s due to error %s", countDownLatch.getCount(), e.getMessage()));
             }
         }
