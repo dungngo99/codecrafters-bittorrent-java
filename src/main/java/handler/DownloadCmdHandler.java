@@ -1,6 +1,7 @@
 package handler;
 
 import domain.ValueWrapper;
+import enums.BEncodeTypeEnum;
 import enums.CmdTypeEnum;
 import exception.ArgumentException;
 import exception.DownloadException;
@@ -11,7 +12,6 @@ import util.FileUtil;
 import util.PeerUtil;
 import util.ValueWrapperUtil;
 
-import java.net.Socket;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -25,10 +25,20 @@ public class DownloadCmdHandler implements CmdHandler {
         if (Objects.isNull(args) || args.length < DEFAULT_PARAMS_SIZE_DOWNLOAD_CMD) {
             throw new ArgumentException("DownloadCmdHandler.getValueWrapper(): invalid params, args=" + Arrays.toString(args));
         }
+        String outputFilePath = args[1];
+        String torrentFilePath = args[2];
 
-        // connect to 1 peer
-        CmdHandler downloadPieceCmdHandler = CmdStore.getCmd(CmdTypeEnum.DOWNLOAD_PIECE.name().toLowerCase());
-        return downloadPieceCmdHandler.getValueWrapper(new String[]{args[0], args[1], args[2], EMPTY_STRING});
+        // get .torrent file info from INFO cmd
+        CmdHandler infoCmdHandler = CmdStore.getCmd(CmdTypeEnum.INFO.name().toLowerCase());
+        ValueWrapper torrentFileVW = infoCmdHandler.getValueWrapper(new String[]{torrentFilePath});
+
+        Map<String, ValueWrapper> downloadVWMap = new HashMap<>() {{
+            put(TORRENT_FILE_PATH_KEY, new ValueWrapper(BEncodeTypeEnum.STRING, torrentFilePath));
+            put(TORRENT_FILE_VALUE_WRAPPER_KEY, torrentFileVW);
+            put(DOWNLOAD_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY, new ValueWrapper(BEncodeTypeEnum.STRING, outputFilePath));
+        }};
+
+        return new ValueWrapper(BEncodeTypeEnum.DICT, downloadVWMap);
     }
 
     @Override
@@ -39,43 +49,36 @@ public class DownloadCmdHandler implements CmdHandler {
             throw new ValueWrapperException("DownloadCmdHandler.getValueWrapper(): invalid decoded value");
         }
 
+        String torrentFilePath = (String) downloadMap.get(TORRENT_FILE_PATH_KEY);
+        String outputFilePath = (String) downloadMap.get(DOWNLOAD_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY);
         Map<?, ?> torrentFileMap = (Map<?, ?>) downloadMap.get(TORRENT_FILE_VALUE_WRAPPER_KEY);
         ValueWrapperMap vwMap = new ValueWrapperMap(torrentFileMap);
-        String outputFilePath = (String) downloadMap.get(DOWNLOAD_PIECE_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY);
         byte[] infoPieces = vwMap.getInfoPieces();
         List<String> pieceHashList = Arrays.stream(DigestUtil.formatPieceHashes(infoPieces)).toList();
 
-        Map<String, Socket> socketMap = (Map<String, Socket>) downloadMap.get(DOWNLOAD_PIECE_VALUE_WRAPPER_KEY);
-        String peerId = socketMap.keySet().stream().findFirst().get();
-        List<String> pieceOutputFilePaths = new ArrayList<>();
-
         CmdHandler downloadPieceCmdHandler = CmdStore.getCmd(CmdTypeEnum.DOWNLOAD_PIECE.name().toLowerCase());
         try {
-            // download each piece
             for (int pieceIndex=0; pieceIndex<pieceHashList.size(); pieceIndex++) {
-                String pieceOutputFilePath = PeerUtil.formatPieceOutputFilepath(peerId, pieceIndex);
-                pieceOutputFilePaths.add(pieceOutputFilePath);
+                String pieceOutputFilePath = PeerUtil.formatPieceOutputFilepath(pieceIndex);
+                String[] args = new String[]{PIECE_OUTPUT_FILE_OPTION, pieceOutputFilePath, torrentFilePath, String.valueOf(pieceIndex)};
 
-                ValueWrapperUtil.modifyVWMap(vw, DOWNLOAD_PIECE_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY, pieceOutputFilePath);
-                ValueWrapperUtil.modifyVWMap(vw, DOWNLOAD_PIECE_INDEX_VALUE_WRAPPER_KEY, pieceIndex);
+                // download each piece
+                ValueWrapper downloadPieceVW = downloadPieceCmdHandler.getValueWrapper(args);
+                downloadPieceCmdHandler.handleValueWrapper(downloadPieceVW);
+                logger.info(String.format("downloaded piece %s to local file %s", pieceIndex, pieceOutputFilePath));
 
-                downloadPieceCmdHandler.handleValueWrapper(vw);
-            }
-
-            // transfer bytes from local files to a single output file
-            for (String pieceOutputFilePath: pieceOutputFilePaths) {
+                // transfer bytes from local files to a single output file
                 byte[] pieceOutputFileBytes = FileUtil.readAllBytesFromFile(pieceOutputFilePath);
                 FileUtil.writeBytesToFile(outputFilePath, pieceOutputFileBytes, Boolean.TRUE);
 
                 // clean up a local file
                 boolean isDelete = FileUtil.deleteFile(pieceOutputFilePath);
                 if (isDelete) {
-                    logger.warning(String.format("deleted local file=%s", pieceOutputFilePath));
+                    logger.info(String.format("deleted local file=%s", pieceOutputFilePath));
                 }
             }
         } catch (Exception e) {
-            logger.warning(String.format("failed to download pieces from peerId=%s to file=%s due to %s",
-                    peerId, outputFilePath, e.getMessage()));
+            logger.warning(String.format("failed to download pieces to file=%s due to %s", outputFilePath, e.getMessage()));
             throw new DownloadException(e);
         }
 

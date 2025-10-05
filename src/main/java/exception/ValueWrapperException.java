@@ -6,7 +6,4 @@ public class ValueWrapperException extends RuntimeException {
         super(message);
     }
 
-    public ValueWrapperException(Throwable e) {
-        super(e);
-    }
 }

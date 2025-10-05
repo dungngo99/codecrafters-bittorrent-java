@@ -127,29 +127,4 @@ public class ValueWrapperUtil {
         System.setProperty(PEER_ID_KEY, peerId);
         return peerId;
     }
-
-    public static void modifyVWMap(ValueWrapper vw, String key, Object o) {
-        if (Objects.isNull(vw)) {
-            logger.warning("null vw, ignore conversion");
-            return;
-        }
-
-        if (!BEncodeTypeEnum.isDict(vw.getbEncodeType())) {
-            return;
-        }
-
-        Map<String, ValueWrapper> map = (Map<String, ValueWrapper>) vw.getO();
-        for (Map.Entry<String, ValueWrapper> entry: map.entrySet()) {
-            String entryKey = entry.getKey();
-            ValueWrapper entryVW = entry.getValue();
-
-            if (Objects.equals(entryKey, key)) {
-                ValueWrapper newVW = new ValueWrapper(entryVW.getbEncodeType(), o);
-                map.put(entryKey, newVW);
-                return;
-            }
-
-            modifyVWMap(entryVW, key, o);
-        }
-    }
 }

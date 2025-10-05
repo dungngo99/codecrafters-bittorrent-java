@@ -171,7 +171,7 @@ public class PeerUtil {
                 : infoPieceLength;
     }
 
-    public static String formatPieceOutputFilepath(String peerId, Integer pieceIndex) {
-        return String.format(PIECE_OUTPUT_FILE_PATH_FORMAT, peerId, pieceIndex);
+    public static String formatPieceOutputFilepath(Integer pieceIndex) {
+        return String.format(PIECE_OUTPUT_FILE_PATH_FORMAT, pieceIndex);
     }
 }
