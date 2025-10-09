@@ -15,6 +15,7 @@ public class CmdStore {
         put(CmdTypeEnum.HANDSHAKE.name().toLowerCase(), new HandshakeCmdHandler());
         put(CmdTypeEnum.DOWNLOAD_PIECE.name().toLowerCase(), new DownloadPieceCmdHandler());
         put(CmdTypeEnum.DOWNLOAD.name().toLowerCase(), new DownloadCmdHandler());
+        put(CmdTypeEnum.MAGNET_PARSE.name().toLowerCase(), new MagnetParseCmdHandler());
     }};
 
     public static CmdHandler getCmd(String cmd) {

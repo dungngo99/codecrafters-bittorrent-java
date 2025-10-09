@@ -3,6 +3,7 @@ package util;
 import constants.Constant;
 
 import java.net.HttpURLConnection;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -43,5 +44,12 @@ public class HttpUtil {
             return;
         }
         headers.forEach(conn::setRequestProperty);
+    }
+
+    public static String decodeUrl(String encodedUrl) {
+        if (Objects.isNull(encodedUrl) || encodedUrl.isBlank()) {
+            return encodedUrl;
+        }
+        return URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8);
     }
 }
