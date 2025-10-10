@@ -21,6 +21,10 @@ public class ByteUtil {
         return ByteBuffer.allocate(Byte.BYTES).put(b).array();
     }
 
+    public static byte[] getFromLong(long l) {
+        return ByteBuffer.allocate(Long.BYTES).putLong(l).array();
+    }
+
     public static void fill(byte[] out, byte[] in, int offset) {
         ByteBuffer byteBuffer = wrap(out);
         byteBuffer.position(offset);

@@ -1,7 +1,7 @@
 package service;
 
 import domain.ValueWrapper;
-import enums.BEncodeTypeEnum;
+import enums.TypeEnum;
 
 import java.util.*;
 
@@ -31,16 +31,16 @@ public class BDecoder {
             return null;
         }
         Character indicator = next();
-        if (BEncodeTypeEnum.isInteger(indicator)) {
+        if (TypeEnum.isInteger(indicator)) {
             return decodeInteger();
         }
-        if (BEncodeTypeEnum.isList(indicator)) {
+        if (TypeEnum.isList(indicator)) {
             return decodeList();
         }
-        if (BEncodeTypeEnum.isDict(indicator)) {
+        if (TypeEnum.isDict(indicator)) {
             return decodeDict();
         }
-        if (BEncodeTypeEnum.isString(indicator) && !isEOI(indicator) && !isColon(indicator)) {
+        if (TypeEnum.isString(indicator) && !isEOI(indicator) && !isColon(indicator)) {
             return decodeString();
         }
         return null;
@@ -58,7 +58,7 @@ public class BDecoder {
             ans += c - '0';
             c = next();
         }
-        return new ValueWrapper(BEncodeTypeEnum.INTEGER, isNegative ? -ans : ans);
+        return new ValueWrapper(TypeEnum.INTEGER, isNegative ? -ans : ans);
     }
 
     private ValueWrapper decodeString() {
@@ -66,7 +66,7 @@ public class BDecoder {
         ValueWrapper vw = decodeInteger();
         int n = ((Long) vw.getO()).intValue();
         String str = new String(nextN(n));
-        return new ValueWrapper(BEncodeTypeEnum.STRING, str);
+        return new ValueWrapper(TypeEnum.STRING, str);
     }
 
     private ValueWrapper decodeList() {
@@ -76,7 +76,7 @@ public class BDecoder {
             vwList.add(vw);
             vw = decode();
         }
-        return new ValueWrapper(BEncodeTypeEnum.LIST, vwList);
+        return new ValueWrapper(TypeEnum.LIST, vwList);
     }
 
     private ValueWrapper decodeDict() {
@@ -87,7 +87,7 @@ public class BDecoder {
             vwMap.put((String) key.getO(), value);
             key = decode();
         }
-        return new ValueWrapper(BEncodeTypeEnum.DICT, vwMap);
+        return new ValueWrapper(TypeEnum.DICT, vwMap);
     }
 
     private Character next() {

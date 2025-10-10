@@ -1,5 +1,6 @@
 package handler;
 
+import com.google.gson.Gson;
 import domain.ValueWrapper;
 import service.BDecoder;
 import util.ValueWrapperUtil;
@@ -21,7 +22,7 @@ public class DecodeCmdHandler implements CmdHandler {
     @Override
     public Object handleValueWrapper(ValueWrapper vw) {
         Object o = ValueWrapperUtil.convertToObject(vw, Boolean.FALSE);
-        System.out.println(gson.toJson(o));
+        System.out.println(new Gson().toJson(o));
         return o;
     }
 }

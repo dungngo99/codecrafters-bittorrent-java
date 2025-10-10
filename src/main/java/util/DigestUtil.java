@@ -1,6 +1,7 @@
 package util;
 
 import constants.Constant;
+import exception.ArgumentException;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -55,5 +56,21 @@ public class DigestUtil {
         }
 
         return pieceHashes;
+    }
+
+    public static byte[] getBytesFromHex(String hex) {
+        int hexLength = hex.length();
+        if (hexLength % 2 != 0) {
+            logger.severe("invalid hex string length=" + hexLength);
+            throw new ArgumentException("invalid hex string length=" + hexLength + ", throw ex");
+        }
+
+        byte[] result = new byte[hexLength / 2];
+        for (int i=0; i<hexLength; i+=2) {
+            String hex_ = hex.substring(i, i+2);
+            result[i/2] = (byte) Integer.parseInt(hex_, Constant.RADIX_HEX_TO_INT);
+        }
+
+        return result;
     }
 }

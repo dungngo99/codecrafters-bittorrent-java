@@ -2,7 +2,7 @@ package handler;
 
 import domain.MagnetLinkV1;
 import domain.ValueWrapper;
-import enums.BEncodeTypeEnum;
+import enums.TypeEnum;
 import exception.ArgumentException;
 import exception.MagnetLinkException;
 import util.HttpUtil;
@@ -39,12 +39,12 @@ public class MagnetParseCmdHandler implements CmdHandler {
         magnetLinkV1.setDn(magnetLinkKVQueryParams.get(MAGNET_PROTOCOL_DN_QUERY_KEY));
         magnetLinkV1.setTr(magnetLinkKVQueryParams.get(MAGNET_PROTOCOL_TR_QUERY_KEY));
 
-        return new ValueWrapper(BEncodeTypeEnum.OBJECT, magnetLinkV1);
+        return new ValueWrapper(TypeEnum.OBJECT, magnetLinkV1);
     }
 
     @Override
     public Object handleValueWrapper(ValueWrapper vw) {
-        if (Objects.isNull(vw) || !Objects.equals(vw.getbEncodeType(), BEncodeTypeEnum.OBJECT)) {
+        if (Objects.isNull(vw) || !Objects.equals(vw.getbEncodeType(), TypeEnum.OBJECT)) {
             logger.warning("invalid parsed value, throw ex");
             throw new MagnetLinkException("MagnetParseCmdHandler.handleValueWrapper(): invalid parsed value");
         }

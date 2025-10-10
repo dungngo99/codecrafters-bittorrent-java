@@ -1,21 +1,21 @@
 package domain;
 
-import enums.BEncodeTypeEnum;
+import enums.TypeEnum;
 
 public class ValueWrapper {
-    private BEncodeTypeEnum bEncodeType;
+    private TypeEnum bEncodeType;
     private Object o;
 
-    public ValueWrapper(BEncodeTypeEnum bEncodeType, Object o) {
+    public ValueWrapper(TypeEnum bEncodeType, Object o) {
         this.bEncodeType = bEncodeType;
         this.o = o;
     }
 
-    public BEncodeTypeEnum getbEncodeType() {
+    public TypeEnum getbEncodeType() {
         return bEncodeType;
     }
 
-    public void setbEncodeType(BEncodeTypeEnum bEncodeType) {
+    public void setbEncodeType(TypeEnum bEncodeType) {
         this.bEncodeType = bEncodeType;
     }
 

@@ -7,5 +7,6 @@ public enum CmdTypeEnum {
     HANDSHAKE,
     DOWNLOAD_PIECE,
     DOWNLOAD,
-    MAGNET_PARSE
+    MAGNET_PARSE,
+    MAGNET_HANDSHAKE
 }

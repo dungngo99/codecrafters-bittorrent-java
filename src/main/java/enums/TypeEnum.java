@@ -2,17 +2,18 @@ package enums;
 
 import java.util.Objects;
 
-public enum BEncodeTypeEnum {
+public enum TypeEnum {
     INTEGER(1, 'i'),
     STRING(2, null),
     LIST(3, 'l'),
     DICT(4, 'd'),
-    OBJECT(5, 'o');
+    OBJECT(5, 'o')
+    ;
 
     private final int value;
     private final Character indicator;
 
-    BEncodeTypeEnum(int value, Character indicator) {
+    TypeEnum(int value, Character indicator) {
         this.value = value;
         this.indicator = indicator;
     }
@@ -33,7 +34,7 @@ public enum BEncodeTypeEnum {
         return Objects.equals(c, DICT.indicator);
     }
 
-    public static boolean isDict(BEncodeTypeEnum bEncodeTypeEnum) {
+    public static boolean isDict(TypeEnum bEncodeTypeEnum) {
         return Objects.nonNull(bEncodeTypeEnum) && DICT.equals(bEncodeTypeEnum);
     }
 

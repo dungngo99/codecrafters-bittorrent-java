@@ -1,23 +1,25 @@
 package util;
 
-import domain.PeerMessage;
-import domain.ValueWrapper;
-import enums.BEncodeTypeEnum;
+import domain.*;
+import enums.TypeEnum;
 import enums.PeerMessageType;
+import service.BDecoderV2;
+import service.HttpClient;
+import service.ValueWrapperMap;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.logging.Logger;
 
 import static constants.Constant.*;
 import static constants.Constant.HANDSHAKE_PEER_ID_BYTE_LENGTH;
 
 public class PeerUtil {
+    private static final Logger logger = Logger.getLogger(PeerUtil.class.getName());
 
-    public static byte[] getHandshakeByteStream(ValueWrapper vw) {
+    public static byte[] getHandshakeByteStream(String clientPeerId, byte[] infoHashBytes, Long reservedOption) {
         int length = HANDSHAKE_HEADER_BYTE_LENGTH
                 + HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH
                 + HANDSHAKE_RESERVED_BYTE_LENGTH
@@ -32,15 +34,20 @@ public class PeerUtil {
             handshakeBytes[i++] = (byte) HANDSHAKE_BITTORRENT_PROTOCOL_STR.charAt(j);
         }
 
-        i += HANDSHAKE_RESERVED_BYTE_LENGTH;
+        if (Objects.isNull(reservedOption)) {
+            i += HANDSHAKE_RESERVED_BYTE_LENGTH;
+        } else {
+            byte[] longBytes = ByteUtil.getFromLong(reservedOption);
+            for (int j=0; j<HANDSHAKE_RESERVED_BYTE_LENGTH; j++) {
+                handshakeBytes[i++] = longBytes[j];
+            }
+        }
 
-        byte[] infoHashBytes = ValueWrapperUtil.getInfoHashAsBytes(vw);
         assert infoHashBytes.length == HANDSHAKE_INFO_HASH_BYTE_LENGTH;
         for (int j=0; j<HANDSHAKE_INFO_HASH_BYTE_LENGTH; j++) {
             handshakeBytes[i++] = infoHashBytes[j];
         }
 
-        String clientPeerId = ValueWrapperUtil.getSetPeerId();
         assert clientPeerId.length() == HANDSHAKE_PEER_ID_BYTE_LENGTH;
         for (int j=0; j<HANDSHAKE_PEER_ID_BYTE_LENGTH; j++) {
             handshakeBytes[i++] = (byte) (clientPeerId.charAt(j) - '0');
@@ -51,25 +58,25 @@ public class PeerUtil {
 
     public static ValueWrapper decodeHandshake(InputStream is) throws IOException {
         List<ValueWrapper> list = new ArrayList<>();
-        ValueWrapper vw = new ValueWrapper(BEncodeTypeEnum.LIST, list);
+        ValueWrapper vw = new ValueWrapper(TypeEnum.LIST, list);
 
-        list.add(new ValueWrapper(BEncodeTypeEnum.INTEGER, is.read()));
+        list.add(new ValueWrapper(TypeEnum.INTEGER, is.read()));
 
         char[] bitTorrentChars = new char[HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH];
         for (int j=0; j<HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH; j++) {
             bitTorrentChars[j] = (char) is.read();
         }
-        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, new String(bitTorrentChars)));
+        list.add(new ValueWrapper(TypeEnum.STRING, new String(bitTorrentChars)));
 
-        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, is.readNBytes(HANDSHAKE_RESERVED_BYTE_LENGTH)));
+        list.add(new ValueWrapper(TypeEnum.STRING, is.readNBytes(HANDSHAKE_RESERVED_BYTE_LENGTH)));
 
-        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, is.readNBytes(HANDSHAKE_INFO_HASH_BYTE_LENGTH)));
+        list.add(new ValueWrapper(TypeEnum.STRING, is.readNBytes(HANDSHAKE_INFO_HASH_BYTE_LENGTH)));
 
         byte[] peerIdBytes = new byte[HANDSHAKE_PEER_ID_BYTE_LENGTH];
         for (int j=0; j<HANDSHAKE_PEER_ID_BYTE_LENGTH; j++) {
             peerIdBytes[j] = (byte) is.read();
         }
-        list.add(new ValueWrapper(BEncodeTypeEnum.STRING, DigestUtil.formatHex(peerIdBytes)));
+        list.add(new ValueWrapper(TypeEnum.STRING, DigestUtil.formatHex(peerIdBytes)));
 
         return vw;
     }
@@ -179,5 +186,62 @@ public class PeerUtil {
     public static Integer randomizePeerBySize(Integer peerSize) {
         Random random = new Random();
         return random.nextInt(peerSize);
+    }
+
+    public static String getSetPeerId() {
+        String peerId = System.getProperty(PEER_ID_KEY);
+        if (Objects.nonNull(peerId) && !peerId.isBlank()) {
+            return peerId;
+        }
+        Random random = new Random(System.currentTimeMillis());
+        StringBuilder sb = new StringBuilder();
+        for (int i=0; i<PEER_ID_LENGTH; i++) {
+            sb.append(random.nextInt(0, 10));
+        }
+        peerId = sb.toString();
+        System.setProperty(PEER_ID_KEY, peerId);
+        return peerId;
+    }
+
+    public static List<PeerInfo> requestPeerInfoList(PeerRequestQueryParam param) {
+        String trackerUrl = param.getTrackerUrl();
+        String infoHash = param.getInfoHash();
+        String infoLength = param.getInfoLength();
+        String peerId = param.getPeerId();
+
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put(INFO_HASH_QUERY_PARAM_KEY, ValueWrapperUtil.urlEncodeInfoHash(infoHash));
+        queryParams.put(PEER_ID_QUERY_PARAM_KEY, peerId);
+        queryParams.put(PORT_QUERY_PARAM_KEY, DEFAULT_PORT_QUERY_PARAM_VALUE);
+        queryParams.put(UPLOADED_QUERY_PARAM_KEY, String.valueOf(DEFAULT_UPLOADED_QUERY_PARAM_VALUE));
+        queryParams.put(DOWNLOADED_QUERY_PARAM_KEY, String.valueOf(DEFAULT_DOWNLOADED_QUERY_PARAM_VALUE));
+        queryParams.put(LEFT_QUERY_PARAM_KEY, infoLength);
+        queryParams.put(COMPACT_QUERY_PARAM_KEY, String.valueOf(DEFAULT_COMPACT_QUERY_PARAM_VALUE));
+
+        List<PeerInfo> peerList = new ArrayList<>();
+        HttpRequestOption option = new HttpRequestOption.Builder().ofNeedUrlEncodeQueryParam(Boolean.FALSE).build();
+        HttpResponse httpResponse = HttpClient.DEFAULT_HTTP_CLIENT.get(trackerUrl, Map.of(), queryParams, option);
+        if (Objects.isNull(httpResponse) || !HttpUtil.isSuccessHttpRequest(httpResponse.getStatus())) {
+            logger.warning("failed to call tracker server, status code=" + httpResponse.getStatus());
+            return peerList;
+        }
+
+        BDecoderV2 bDecoderV2 = new BDecoderV2(httpResponse.getBytes());
+        ValueWrapper trackerVW = bDecoderV2.decode();
+        if (Objects.isNull(trackerVW)
+                || !Objects.equals(trackerVW.getbEncodeType(), TypeEnum.DICT)
+                || !(trackerVW.getO() instanceof Map<?, ?> trackerVWMap)) {
+            logger.warning("invalid tracker value wrapper, ignore parsing");
+            return peerList;
+        }
+
+        ValueWrapperMap valueWrapperHelper = new ValueWrapperMap(trackerVWMap);
+        if (!valueWrapperHelper.getFailureReason().isBlank()) {
+            System.out.println(valueWrapperHelper.getFailureReason());
+            return peerList;
+        }
+
+        peerList.addAll(valueWrapperHelper.getPeers());
+        return peerList;
     }
 }

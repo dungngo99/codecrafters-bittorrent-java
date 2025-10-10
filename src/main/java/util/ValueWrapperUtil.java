@@ -1,7 +1,7 @@
 package util;
 
 import domain.ValueWrapper;
-import enums.BEncodeTypeEnum;
+import enums.TypeEnum;
 import service.BEncoderV2;
 
 import java.io.IOException;
@@ -24,21 +24,21 @@ public class ValueWrapperUtil {
             return null;
         }
 
-        BEncodeTypeEnum typeEnum = vw.getbEncodeType();
-        if (Objects.equals(typeEnum, BEncodeTypeEnum.INTEGER)) {
+        TypeEnum typeEnum = vw.getbEncodeType();
+        if (Objects.equals(typeEnum, TypeEnum.INTEGER)) {
             return vw.getO();
         }
 
-        if (Objects.equals(typeEnum, BEncodeTypeEnum.STRING)) {
+        if (Objects.equals(typeEnum, TypeEnum.STRING)) {
             // if use BDecoder, set needConvertString = false
             return needConvertString ? new String((byte[]) vw.getO(), StandardCharsets.UTF_8) : vw.getO();
         }
 
-        if (Objects.equals(typeEnum, BEncodeTypeEnum.OBJECT)) {
+        if (Objects.equals(typeEnum, TypeEnum.OBJECT)) {
             return vw.getO();
         }
 
-        if (Objects.equals(typeEnum, BEncodeTypeEnum.LIST)) {
+        if (Objects.equals(typeEnum, TypeEnum.LIST)) {
             if (!(vw.getO() instanceof List<?>)) {
                 logger.warning("object not BEncodeTypeEnum.LIST, ignore conversion");
                 return null;
@@ -50,7 +50,7 @@ public class ValueWrapperUtil {
             return list;
         }
 
-        if (Objects.equals(typeEnum, BEncodeTypeEnum.DICT)) {
+        if (Objects.equals(typeEnum, TypeEnum.DICT)) {
             if (!(vw.getO() instanceof Map<?, ?>)) {
                 logger.warning("object not BEncodeTypeEnum.DICT, ignore conversion");
                 return null;
@@ -113,18 +113,28 @@ public class ValueWrapperUtil {
         return joiner.toString();
     }
 
-    public static String getSetPeerId() {
-        String peerId = System.getProperty(PEER_ID_KEY);
-        if (Objects.nonNull(peerId) && !peerId.isBlank()) {
-            return peerId;
-        }
-        Random random = new Random(System.currentTimeMillis());
-        StringBuilder sb = new StringBuilder();
-        for (int i=0; i<PEER_ID_LENGTH; i++) {
-            sb.append(random.nextInt(0, 10));
-        }
-        peerId = sb.toString();
-        System.setProperty(PEER_ID_KEY, peerId);
-        return peerId;
+    public static ValueWrapper createHandshakeVW(String ipAddressPortNumber,
+                                                 byte[] infoHashBytes,
+                                                 String clientPeerId) {
+        return createHandshakeVW(ipAddressPortNumber, infoHashBytes, clientPeerId, null);
+    }
+
+    public static ValueWrapper createHandshakeVW(String ipAddressPortNumber,
+                                                 byte[] infoHashBytes,
+                                                 String clientPeerId,
+                                                 Long reservedOption) {
+        ValueWrapper ipAddressPortNumberVW = new ValueWrapper(TypeEnum.STRING, ipAddressPortNumber);
+        ValueWrapper infoHashBytesVW = new ValueWrapper(TypeEnum.OBJECT, infoHashBytes);
+        ValueWrapper clientPeerIdVW = new ValueWrapper(TypeEnum.STRING, clientPeerId);
+        ValueWrapper reservedOptionVW = new ValueWrapper(TypeEnum.OBJECT, reservedOption);
+
+        Map<String, ValueWrapper> handshakeVWMap = Map.of(
+                HANDSHAKE_INFO_HASH_BYTES_VALUE_WRAPPER_KEY, infoHashBytesVW,
+                HANDSHAKE_CLIENT_PEER_ID_VALUE_WRAPPER_KEY, clientPeerIdVW,
+                HANDSHAKE_IP_PORT_VALUE_WRAPPER_KEY, ipAddressPortNumberVW,
+                HANDSHAKE_RESERVED_OPTION_VALUE_WRAPPER_KEY, reservedOptionVW
+        );
+
+        return new ValueWrapper(TypeEnum.DICT, handshakeVWMap);
     }
 }

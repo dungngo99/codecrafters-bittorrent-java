@@ -14,6 +14,7 @@ public class Constant {
     public static final Integer PARAMS_SIZE_DOWNLOAD_PIECE_CMD_WITH_PEER_INDEX = 5;
     public static final Integer DEFAULT_PARAMS_SIZE_DOWNLOAD_CMD = 3;
     public static final Integer DEFAULT_PARAMS_SIZE_MAGNET_PARSE_CMD = 1;
+    public static final Integer DEFAULT_PARAMS_SIZE_MAGNET_HANDSHAKE_CMD = 1;
     public static final String ANNOUNCE_KEY_INFO_CMD = "announce";
     public static final String CREATED_BY_KEY_INFO_CMD = "created by";
     public static final String INFO_KEY_INFO_CMD = "info";
@@ -31,6 +32,9 @@ public class Constant {
     public static final String DOWNLOADED_QUERY_PARAM_KEY = "downloaded";
     public static final String TORRENT_FILE_PATH_KEY = "torrent_file_path";
     public static final String TORRENT_FILE_VALUE_WRAPPER_KEY = "torrent_file_value_wrapper";
+    public static final String HANDSHAKE_INFO_HASH_BYTES_VALUE_WRAPPER_KEY = "handshake_info_hash_bytes_value_wrapper";
+    public static final String HANDSHAKE_CLIENT_PEER_ID_VALUE_WRAPPER_KEY = "handshake_client_peer_id_value_wrapper";
+    public static final String HANDSHAKE_RESERVED_OPTION_VALUE_WRAPPER_KEY = "handshake_reserved_option_value_wrapper";
     public static final String HANDSHAKE_IP_PORT_VALUE_WRAPPER_KEY = "handshake_ip_port_value_wrapper";
     public static final String DOWNLOAD_PIECE_VALUE_WRAPPER_KEY = "download_piece_value_wrapper";
     public static final String DOWNLOAD_PIECE_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY = "download_piece_output_file_path_value_wrapper";
@@ -100,5 +104,8 @@ public class Constant {
     public static final String MAGNET_PROTOCOL_XT_QUERY_KEY = "xt";
     public static final String MAGNET_PROTOCOL_DN_QUERY_KEY = "dn";
     public static final String MAGNET_PROTOCOL_TR_QUERY_KEY = "tr";
+    public static final Integer MAGNET_HANDSHAKE_DEFAULT_INFO_LENGTH = 999;
     public static final Integer PARAM_KV_PAIR_LENGTH = 2;
+    public static final Long INITIAL_OPTION = 0L;
+    public static final Long PEER_EXCHANGE_TORRENT_METADATA_EXTENSION_OPTION = 1L << 20;
 }

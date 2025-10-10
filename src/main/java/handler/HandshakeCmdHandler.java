@@ -1,7 +1,7 @@
 package handler;
 
 import domain.ValueWrapper;
-import enums.BEncodeTypeEnum;
+import enums.TypeEnum;
 import enums.CmdTypeEnum;
 import exception.ArgumentException;
 import exception.PeerExchangeException;
@@ -27,18 +27,16 @@ public class HandshakeCmdHandler implements CmdHandler {
             throw new ArgumentException("HandshakeHandler.getValueWrapper(): invalid params: args=" + Arrays.toString(args));
         }
         String torrentFilePath = args[0];
-        String inputIpAddressPortNumber = args[1];
+        String ipAddressPortNumber = args[1];
 
         // get .torrent file info from INFO cmd
         CmdHandler infoCmdHandler = CmdStore.getCmd(CmdTypeEnum.INFO.name().toLowerCase());
         ValueWrapper torrentFileVW = infoCmdHandler.getValueWrapper(new String[]{torrentFilePath});
 
         // combine args and .torrent file info for next stage
-        ValueWrapper inputIpAddressPortNumberVW = new ValueWrapper(BEncodeTypeEnum.STRING, inputIpAddressPortNumber);
-        Map<String, ValueWrapper> handshakeVWMap = Map.of(
-                TORRENT_FILE_VALUE_WRAPPER_KEY, torrentFileVW,
-                HANDSHAKE_IP_PORT_VALUE_WRAPPER_KEY, inputIpAddressPortNumberVW);
-        return new ValueWrapper(BEncodeTypeEnum.DICT, handshakeVWMap);
+        byte[] infoHashBytes = ValueWrapperUtil.getInfoHashAsBytes(torrentFileVW);
+        String clientPeerId = PeerUtil.getSetPeerId();
+        return ValueWrapperUtil.createHandshakeVW(ipAddressPortNumber, infoHashBytes, clientPeerId);
     }
 
     @Override
@@ -48,11 +46,14 @@ public class HandshakeCmdHandler implements CmdHandler {
             logger.warning("invalid decoded value, throw ex");
             throw new ValueWrapperException("HandshakeHandler.handleValueWrapper(): invalid decoded value");
         }
-        byte[] handshakeByteStream = PeerUtil.getHandshakeByteStream(vw);
 
         String ipAddressPortNumber = (String) handshakeMap.get(HANDSHAKE_IP_PORT_VALUE_WRAPPER_KEY);
         String ipAddress = ipAddressPortNumber.split(COLON_SIGN)[HANDSHAKE_IP_ADDRESS_INDEX];
         String portNumber = ipAddressPortNumber.split(COLON_SIGN)[HANDSHAKE_PORT_NUMBER_INDEX];
+        String clientPeerId = (String) handshakeMap.get(HANDSHAKE_CLIENT_PEER_ID_VALUE_WRAPPER_KEY);
+        byte[] infoHashBytes = (byte[]) handshakeMap.get(HANDSHAKE_INFO_HASH_BYTES_VALUE_WRAPPER_KEY);
+        Long reservedOption = (Long) handshakeMap.get(HANDSHAKE_RESERVED_OPTION_VALUE_WRAPPER_KEY);
+        byte[] handshakeByteStream = PeerUtil.getHandshakeByteStream(clientPeerId, infoHashBytes, reservedOption);
 
         Map<String, ValueWrapper> connectionMap = new HashMap<>();
         try {
@@ -67,7 +68,7 @@ public class HandshakeCmdHandler implements CmdHandler {
             String peerId = (String) handshakeVWList.get(HANDSHAKE_PEER_ID_INDEX_IN_VW_LIST).getO();
             System.out.println("Peer ID: " + peerId);
 
-            connectionMap.put(peerId, new ValueWrapper(BEncodeTypeEnum.OBJECT, socket));
+            connectionMap.put(peerId, new ValueWrapper(TypeEnum.OBJECT, socket));
         } catch (IOException e) {
             logger.warning(String.format("failed to init TCP connection due to %s: host=%s; port=%s, throw ex",
                     e.getMessage(), ipAddress, portNumber));

@@ -3,7 +3,7 @@ package handler;
 import domain.PeerInfo;
 import domain.PeerMessage;
 import domain.ValueWrapper;
-import enums.BEncodeTypeEnum;
+import enums.TypeEnum;
 import enums.CmdTypeEnum;
 import exception.ArgumentException;
 import exception.DownloadPieceException;
@@ -59,22 +59,25 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         String ipAddressPortNumber = String.format(IP_ADDRESS_PORT_NUMBER_FORMAT, peer.getIp(), peer.getPort());
 
         // establish a TCP/IP connection with a peer then perform a handshake
+        byte[] infoHashBytes = ValueWrapperUtil.getInfoHashAsBytes(torrentFileVW);
+        String clientPeerId = PeerUtil.getSetPeerId();
+        ValueWrapper handshakeVW = ValueWrapperUtil.createHandshakeVW(ipAddressPortNumber, infoHashBytes, clientPeerId);
         CmdHandler handshakeCmdHandler = CmdStore.getCmd(CmdTypeEnum.HANDSHAKE.name().toLowerCase());
-        ValueWrapper ipAddressPortNumberVW = new ValueWrapper(BEncodeTypeEnum.STRING, ipAddressPortNumber);
-        Map<String, ValueWrapper> handshakeVWMap = Map.of(
-                TORRENT_FILE_VALUE_WRAPPER_KEY, torrentFileVW,
-                HANDSHAKE_IP_PORT_VALUE_WRAPPER_KEY, ipAddressPortNumberVW);
-        ValueWrapper handshakeVW = new ValueWrapper(BEncodeTypeEnum.DICT, handshakeVWMap);
         Map<String, ValueWrapper> socketMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
 
         // combine args, .torrent file info, socket info for next stage
+        ValueWrapper socketMapVW = new ValueWrapper(TypeEnum.DICT, socketMap);
+        ValueWrapper pieceOutputFilePathVW = new ValueWrapper(TypeEnum.STRING, pieceOutputFilePath);
+        ValueWrapper pieceIndexVW = new ValueWrapper(TypeEnum.INTEGER, pieceIndex);
+
         Map<String, ValueWrapper> downloadPieceVWMap = Map.of(
                 TORRENT_FILE_VALUE_WRAPPER_KEY, torrentFileVW,
-                DOWNLOAD_PIECE_VALUE_WRAPPER_KEY, new ValueWrapper(BEncodeTypeEnum.DICT, socketMap),
-                DOWNLOAD_PIECE_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY, new ValueWrapper(BEncodeTypeEnum.STRING, pieceOutputFilePath),
-                DOWNLOAD_PIECE_INDEX_VALUE_WRAPPER_KEY, new ValueWrapper(BEncodeTypeEnum.INTEGER, pieceIndex)
+                DOWNLOAD_PIECE_VALUE_WRAPPER_KEY, socketMapVW,
+                DOWNLOAD_PIECE_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY, pieceOutputFilePathVW,
+                DOWNLOAD_PIECE_INDEX_VALUE_WRAPPER_KEY, pieceIndexVW
         );
-        return new ValueWrapper(BEncodeTypeEnum.DICT, downloadPieceVWMap);
+
+        return new ValueWrapper(TypeEnum.DICT, downloadPieceVWMap);
     }
 
     @Override
