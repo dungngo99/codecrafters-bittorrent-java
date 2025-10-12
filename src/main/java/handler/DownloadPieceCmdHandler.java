@@ -63,16 +63,16 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         String clientPeerId = PeerUtil.getSetPeerId();
         ValueWrapper handshakeVW = ValueWrapperUtil.createHandshakeVW(ipAddressPortNumber, infoHashBytes, clientPeerId);
         CmdHandler handshakeCmdHandler = CmdStore.getCmd(CmdTypeEnum.HANDSHAKE.name().toLowerCase());
-        Map<String, ValueWrapper> socketMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
+        Map<String, ValueWrapper> peerHandshakeMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
 
         // combine args, .torrent file info, socket info for next stage
-        ValueWrapper socketMapVW = new ValueWrapper(TypeEnum.DICT, socketMap);
+        ValueWrapper peerHandshakeMapVW = new ValueWrapper(TypeEnum.DICT, peerHandshakeMap);
         ValueWrapper pieceOutputFilePathVW = new ValueWrapper(TypeEnum.STRING, pieceOutputFilePath);
         ValueWrapper pieceIndexVW = new ValueWrapper(TypeEnum.INTEGER, pieceIndex);
 
         Map<String, ValueWrapper> downloadPieceVWMap = Map.of(
                 TORRENT_FILE_VALUE_WRAPPER_KEY, torrentFileVW,
-                DOWNLOAD_PIECE_VALUE_WRAPPER_KEY, socketMapVW,
+                DOWNLOAD_PIECE_PEER_HANDSHAKE_MAP_VALUE_WRAPPER_KEY, peerHandshakeMapVW,
                 DOWNLOAD_PIECE_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY, pieceOutputFilePathVW,
                 DOWNLOAD_PIECE_INDEX_VALUE_WRAPPER_KEY, pieceIndexVW
         );
@@ -95,11 +95,11 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         byte[] infoPieces = vwMap.getInfoPieces();
         List<String> pieceHashList = Arrays.stream(DigestUtil.formatPieceHashes(infoPieces)).toList();
 
-        Map<String, Socket> socketMap = (Map<String, Socket>) downloadPieceMap.get(DOWNLOAD_PIECE_VALUE_WRAPPER_KEY);
+        Map<String, Object> peerHandshakeMap = (Map<String, Object>) downloadPieceMap.get(DOWNLOAD_PIECE_PEER_HANDSHAKE_MAP_VALUE_WRAPPER_KEY);
         String pieceOutputFilePath = (String) downloadPieceMap.get(DOWNLOAD_PIECE_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY);
         Integer pieceIndex = (Integer) downloadPieceMap.get(DOWNLOAD_PIECE_INDEX_VALUE_WRAPPER_KEY);
-        String peerId = socketMap.keySet().stream().findFirst().get();
-        Socket socket = socketMap.values().stream().findFirst().get();
+        String peerId = (String) peerHandshakeMap.get(HANDSHAKE_PEER_ID);
+        Socket socket = (Socket) peerHandshakeMap.get(HANDSHAKE_PEER_SOCKET_CONNECTION);
 
         try {
             InputStream is = socket.getInputStream();

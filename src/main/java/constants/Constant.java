@@ -36,7 +36,7 @@ public class Constant {
     public static final String HANDSHAKE_CLIENT_PEER_ID_VALUE_WRAPPER_KEY = "handshake_client_peer_id_value_wrapper";
     public static final String HANDSHAKE_RESERVED_OPTION_VALUE_WRAPPER_KEY = "handshake_reserved_option_value_wrapper";
     public static final String HANDSHAKE_IP_PORT_VALUE_WRAPPER_KEY = "handshake_ip_port_value_wrapper";
-    public static final String DOWNLOAD_PIECE_VALUE_WRAPPER_KEY = "download_piece_value_wrapper";
+    public static final String DOWNLOAD_PIECE_PEER_HANDSHAKE_MAP_VALUE_WRAPPER_KEY = "download_piece_peer_handshake_map_value_wrapper";
     public static final String DOWNLOAD_PIECE_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY = "download_piece_output_file_path_value_wrapper";
     public static final String DOWNLOAD_PIECE_INDEX_VALUE_WRAPPER_KEY = "download_piece_index_value_wrapper";
     public static final String DOWNLOAD_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY = "download_output_file_path_value_wrapper";
@@ -88,7 +88,11 @@ public class Constant {
     public static final Integer HANDSHAKE_INFO_HASH_BYTE_LENGTH = 20;
     public static final Integer HANDSHAKE_PEER_ID_BYTE_LENGTH = 20;
     public static final String HANDSHAKE_BITTORRENT_PROTOCOL_STR = "BitTorrent protocol";
+    public static final Integer HANDSHAKE_PEER_RESERVED_OPTION_INDEX_IN_VW_LIST = 2;
     public static final Integer HANDSHAKE_PEER_ID_INDEX_IN_VW_LIST = 4;
+    public static final String HANDSHAKE_PEER_SOCKET_CONNECTION = "handshake_peer_socket_connection";
+    public static final String HANDSHAKE_PEER_ID = "handshake_peer_id";
+    public static final String HANDSHAKE_PEER_RESERVED_OPTION = "handshake_peer_reserved_option";
     public static final String IP_ADDRESS_PORT_NUMBER_FORMAT = "%s:%s";
     public static final Integer PEER_MESSAGE_PREFIXED_LENGTH = 4;
     public static final Integer PEER_MESSAGE_ID_LENGTH = 1;
@@ -108,4 +112,10 @@ public class Constant {
     public static final Integer PARAM_KV_PAIR_LENGTH = 2;
     public static final Long INITIAL_OPTION = 0L;
     public static final Long PEER_EXCHANGE_TORRENT_METADATA_EXTENSION_OPTION = 1L << 20;
+    public static final Integer DEFAULT_PEER_HANDSHAKE_MESSAGE_ID = 20;
+    public static final Integer DEFAULT_PEER_HANDSHAKE_EXTENSION_MESSAGE_ID = 0;
+    public static final Integer DEFAULT_PEER_HANDSHAKE_UT_METADATA_ID = 1;
+    public static final Integer DEFAULT_PEER_HANDSHAKE_EXTENSION_MESSAGE_ID_LENGTH = 1;
+    public static final String PEER_HANDSHAKE_M = "m";
+    public static final String PEER_HANDSHAKE_UT_METADATA_NAME = "ut_metadata";
 }

@@ -1,26 +1,23 @@
 package handler;
 
-import domain.MagnetLinkV1;
-import domain.PeerInfo;
-import domain.PeerRequestQueryParam;
-import domain.ValueWrapper;
+import domain.*;
 import enums.CmdTypeEnum;
 import enums.TypeEnum;
 import exception.ArgumentException;
 import exception.MagnetLinkException;
-import util.BitUtil;
-import util.DigestUtil;
-import util.PeerUtil;
-import util.ValueWrapperUtil;
+import util.*;
 
+import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 import static constants.Constant.*;
 
 public class MagnetHandshakeCmdHandler implements CmdHandler {
+    private static final Logger logger = Logger.getLogger(MagnetHandshakeCmdHandler.class.getName());
 
     @Override
     public ValueWrapper getValueWrapper(String[] args) {
@@ -54,9 +51,22 @@ public class MagnetHandshakeCmdHandler implements CmdHandler {
         ValueWrapper handshakeVW = ValueWrapperUtil.createHandshakeVW(ipAddressPortNumber, infoHashBytes, clientPeerId, reservedOption);
 
         CmdHandler handshakeCmdHandler = CmdStore.getCmd(CmdTypeEnum.HANDSHAKE.name().toLowerCase());
-        Map<String, ValueWrapper> socketMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
+        Map<String, ValueWrapper> peerHandshakeMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
 
-        return new ValueWrapper(TypeEnum.OBJECT, socketMap);
+        // perform extension handshake message
+        Socket socket = (Socket) peerHandshakeMap.get(HANDSHAKE_PEER_SOCKET_CONNECTION).getO();
+        byte[] peerReservedOptionBytes = (byte[]) peerHandshakeMap.get(HANDSHAKE_PEER_RESERVED_OPTION).getO();
+        try {
+            long peerReservedOption = ByteUtil.getAsLong(peerReservedOptionBytes);
+            if (BitUtil.isSet(peerReservedOption, PEER_EXCHANGE_TORRENT_METADATA_EXTENSION_OPTION)) {
+                PeerMessage extensionHandshakeMessage = PeerUtil.sendExtensionHandshakeMessage(socket.getOutputStream());
+                logger.info("sent extension handshake message with peerMessage=" + extensionHandshakeMessage);
+            }
+        } catch (Exception e) {
+            throw new MagnetLinkException("failed to perform extension handshake message due to error=" + e.getMessage());
+        }
+
+        return new ValueWrapper(TypeEnum.DICT, peerHandshakeMap);
     }
 
     @Override

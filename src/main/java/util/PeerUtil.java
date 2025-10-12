@@ -4,6 +4,7 @@ import domain.*;
 import enums.TypeEnum;
 import enums.PeerMessageType;
 import service.BDecoderV2;
+import service.BEncoderV2;
 import service.HttpClient;
 import service.ValueWrapperMap;
 
@@ -68,9 +69,9 @@ public class PeerUtil {
         }
         list.add(new ValueWrapper(TypeEnum.STRING, new String(bitTorrentChars)));
 
-        list.add(new ValueWrapper(TypeEnum.STRING, is.readNBytes(HANDSHAKE_RESERVED_BYTE_LENGTH)));
+        list.add(new ValueWrapper(TypeEnum.OBJECT, is.readNBytes(HANDSHAKE_RESERVED_BYTE_LENGTH)));
 
-        list.add(new ValueWrapper(TypeEnum.STRING, is.readNBytes(HANDSHAKE_INFO_HASH_BYTE_LENGTH)));
+        list.add(new ValueWrapper(TypeEnum.OBJECT, is.readNBytes(HANDSHAKE_INFO_HASH_BYTE_LENGTH)));
 
         byte[] peerIdBytes = new byte[HANDSHAKE_PEER_ID_BYTE_LENGTH];
         for (int j=0; j<HANDSHAKE_PEER_ID_BYTE_LENGTH; j++) {
@@ -243,5 +244,37 @@ public class PeerUtil {
 
         peerList.addAll(valueWrapperHelper.getPeers());
         return peerList;
+    }
+
+    public static PeerMessage sendExtensionHandshakeMessage(OutputStream os) throws IOException {
+        PeerMessage peerMessage = new PeerMessage();
+        peerMessage.setMessageId(DEFAULT_PEER_HANDSHAKE_MESSAGE_ID.byteValue());
+
+        Map<String, ValueWrapper> extensionMessageMap = new HashMap<>();
+        ValueWrapper extensionMessageMapVW = new ValueWrapper(TypeEnum.DICT, extensionMessageMap);
+
+        Map<String, ValueWrapper> subExtensionMessageMap = new HashMap<>();
+        ValueWrapper subExtensionMessageMapVW = new ValueWrapper(TypeEnum.DICT, subExtensionMessageMap);
+        extensionMessageMap.put(PEER_HANDSHAKE_M, subExtensionMessageMapVW);
+
+        ValueWrapper extensionMessageUtMetadataVW = new ValueWrapper(TypeEnum.INTEGER, DEFAULT_PEER_HANDSHAKE_UT_METADATA_ID);
+        subExtensionMessageMap.put(PEER_HANDSHAKE_UT_METADATA_NAME, extensionMessageUtMetadataVW);
+
+        BEncoderV2 bEncoderV2 = new BEncoderV2(extensionMessageMapVW);
+        byte[] extensionMessageBytes = bEncoderV2.encode();
+        byte[] payload = new byte[DEFAULT_PEER_HANDSHAKE_EXTENSION_MESSAGE_ID_LENGTH + extensionMessageBytes.length];
+        int offset = 0;
+        ByteUtil.fill(payload, new byte[]{DEFAULT_PEER_HANDSHAKE_EXTENSION_MESSAGE_ID.byteValue()}, offset);
+        offset++;
+        ByteUtil.fill(payload, extensionMessageBytes, offset);
+        peerMessage.setPayload(payload);
+
+        int prefixedLength = PEER_MESSAGE_ID_LENGTH + payload.length;
+        peerMessage.setPrefixedLength(prefixedLength);
+
+        byte[] bytes = convertPeerMessageToBytes(peerMessage);
+        SocketUtil.writeThenFlush(os, bytes);
+
+        return peerMessage;
     }
 }

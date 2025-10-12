@@ -65,10 +65,16 @@ public class HandshakeCmdHandler implements CmdHandler {
             InputStream is = socket.getInputStream();
             ValueWrapper handshakeVW = PeerUtil.decodeHandshake(is);
             List<ValueWrapper> handshakeVWList = (List<ValueWrapper>) handshakeVW.getO();
-            String peerId = (String) handshakeVWList.get(HANDSHAKE_PEER_ID_INDEX_IN_VW_LIST).getO();
+            ValueWrapper reservedOptionVW = handshakeVWList.get(HANDSHAKE_PEER_RESERVED_OPTION_INDEX_IN_VW_LIST);
+            ValueWrapper peerIdVW = handshakeVWList.get(HANDSHAKE_PEER_ID_INDEX_IN_VW_LIST);
+            ValueWrapper peerSocketVW = new ValueWrapper(TypeEnum.OBJECT, socket);
+
+            String peerId = (String) peerIdVW.getO();
             System.out.println("Peer ID: " + peerId);
 
-            connectionMap.put(peerId, new ValueWrapper(TypeEnum.OBJECT, socket));
+            connectionMap.put(HANDSHAKE_PEER_RESERVED_OPTION, reservedOptionVW);
+            connectionMap.put(HANDSHAKE_PEER_ID, peerIdVW);
+            connectionMap.put(HANDSHAKE_PEER_SOCKET_CONNECTION, peerSocketVW);
         } catch (IOException e) {
             logger.warning(String.format("failed to init TCP connection due to %s: host=%s; port=%s, throw ex",
                     e.getMessage(), ipAddress, portNumber));

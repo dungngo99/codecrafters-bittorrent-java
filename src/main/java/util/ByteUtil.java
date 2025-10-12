@@ -9,6 +9,11 @@ public class ByteUtil {
         return wrap(bytes).getInt();
     }
 
+    public static long getAsLong(byte[] bytes) {
+        assert bytes.length == Long.BYTES;
+        return wrap(bytes).getLong();
+    }
+
     public static ByteBuffer wrap(byte[] bytes) {
         return ByteBuffer.wrap(bytes);
     }
