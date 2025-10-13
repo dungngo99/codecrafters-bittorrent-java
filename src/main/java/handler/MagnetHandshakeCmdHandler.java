@@ -52,11 +52,19 @@ public class MagnetHandshakeCmdHandler implements CmdHandler {
 
         CmdHandler handshakeCmdHandler = CmdStore.getCmd(CmdTypeEnum.HANDSHAKE.name().toLowerCase());
         Map<String, ValueWrapper> peerHandshakeMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
+        Socket socket = (Socket) peerHandshakeMap.get(HANDSHAKE_PEER_SOCKET_CONNECTION).getO();
+
+        // listen bitfield from peer extension message
+        try {
+            PeerMessage bitFieldPeerMessage = PeerUtil.listenBitFieldPeerMessage(socket.getInputStream());
+            logger.info("listened for extension handshake bitfield peer message with message=" + bitFieldPeerMessage);
+        } catch (Exception e) {
+            throw new MagnetLinkException("failed to listen bitfield peer extension message due to error=" + e.getMessage());
+        }
 
         // perform extension handshake message
-        Socket socket = (Socket) peerHandshakeMap.get(HANDSHAKE_PEER_SOCKET_CONNECTION).getO();
-        byte[] peerReservedOptionBytes = (byte[]) peerHandshakeMap.get(HANDSHAKE_PEER_RESERVED_OPTION).getO();
         try {
+            byte[] peerReservedOptionBytes = (byte[]) peerHandshakeMap.get(HANDSHAKE_PEER_RESERVED_OPTION).getO();
             long peerReservedOption = ByteUtil.getAsLong(peerReservedOptionBytes);
             if (BitUtil.isSet(peerReservedOption, PEER_EXCHANGE_TORRENT_METADATA_EXTENSION_OPTION)) {
                 PeerMessage extensionHandshakeMessage = PeerUtil.sendExtensionHandshakeMessage(socket.getOutputStream());

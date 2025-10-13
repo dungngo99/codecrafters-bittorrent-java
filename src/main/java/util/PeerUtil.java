@@ -281,7 +281,6 @@ public class PeerUtil {
     public static PeerMessage listenExtensionHandshakePeerMessage(InputStream is) throws IOException {
         PeerMessage peerMessage = new PeerMessage();
         byte[] prefixedLengthBytes = is.readNBytes(PEER_MESSAGE_PREFIXED_LENGTH);
-        System.out.println(Arrays.toString(prefixedLengthBytes));
         int prefixedLength = ByteUtil.getAsInt(prefixedLengthBytes);
         peerMessage.setPrefixedLength(prefixedLength);
 
@@ -301,7 +300,7 @@ public class PeerUtil {
 
         Map<String, Integer> extensionNameIdMap = new HashMap<>();
         peerExtensionMessage.setExtensionNameIdMap(extensionNameIdMap);
-        System.out.println(Arrays.toString(bytes));
+
         byte[] payload = Arrays.copyOfRange(bytes, offset, bytes.length);
         BDecoderV2 bDecoderV2 = new BDecoderV2(payload);
         ValueWrapper valueWrapper = bDecoderV2.decode();

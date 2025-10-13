@@ -22,7 +22,7 @@ public class BDecoderV2 {
     }
 
     public ValueWrapper decode() {
-        if (isEOS()) {
+        if (isEmpty() || isEOS()) {
             return null;
         }
         char indicator = nextChar();
@@ -120,6 +120,10 @@ public class BDecoderV2 {
 
     private boolean isNegative(char b) {
         return b == '-';
+    }
+
+    public boolean isEmpty() {
+        return bytes.length == 0;
     }
 
     private boolean isEOS() {

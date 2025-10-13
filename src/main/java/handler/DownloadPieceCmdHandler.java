@@ -104,8 +104,8 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         try {
             InputStream is = socket.getInputStream();
             OutputStream os = socket.getOutputStream();
-            PeerMessage piecesPeerMessage = PeerUtil.listenBitFieldPeerMessage(is);
-            logger.info(String.format("listened for bitfield peer message=%s from peerId=%s", piecesPeerMessage, peerId));
+            PeerMessage bitFieldPeerMessage = PeerUtil.listenBitFieldPeerMessage(is);
+            logger.info(String.format("listened for bitfield peer message=%s from peerId=%s", bitFieldPeerMessage, peerId));
 
             PeerMessage interestedPeerMessage = PeerUtil.sendInterestedPeerMessage(os);
             logger.info(String.format("sent interested peer message=%s from peerId=%s", interestedPeerMessage, peerId));
