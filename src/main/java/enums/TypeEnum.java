@@ -38,6 +38,10 @@ public enum TypeEnum {
         return Objects.nonNull(bEncodeTypeEnum) && DICT.equals(bEncodeTypeEnum);
     }
 
+    public static boolean isInteger(TypeEnum bEncodeTypeEnum) {
+        return Objects.nonNull(bEncodeTypeEnum) && INTEGER.equals(bEncodeTypeEnum);
+    }
+
     public int getValue() {
         return value;
     }

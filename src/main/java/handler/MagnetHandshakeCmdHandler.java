@@ -62,6 +62,15 @@ public class MagnetHandshakeCmdHandler implements CmdHandler {
                 PeerMessage extensionHandshakeMessage = PeerUtil.sendExtensionHandshakeMessage(socket.getOutputStream());
                 logger.info("sent extension handshake message with peerMessage=" + extensionHandshakeMessage);
             }
+
+            PeerMessage peerMessage = PeerUtil.listenExtensionHandshakePeerMessage(socket.getInputStream());
+            PeerExtensionMessage peerExtensionMessage = PeerUtil.parsePeerExtensionMessage(peerMessage.getPayload());
+            Map<String, Integer> extensionNameIdMap = peerExtensionMessage.getExtensionNameIdMap();
+            if (extensionNameIdMap.containsKey(PEER_HANDSHAKE_UT_METADATA_NAME)) {
+                System.out.println("Peer Metadata Extension ID: " + extensionNameIdMap.get(PEER_HANDSHAKE_UT_METADATA_NAME));
+            } else {
+                logger.warning("peer metadata extension id not found for " + peerExtensionMessage);
+            }
         } catch (Exception e) {
             throw new MagnetLinkException("failed to perform extension handshake message due to error=" + e.getMessage());
         }

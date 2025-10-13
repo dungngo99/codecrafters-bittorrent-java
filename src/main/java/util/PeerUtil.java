@@ -277,4 +277,53 @@ public class PeerUtil {
 
         return peerMessage;
     }
+
+    public static PeerMessage listenExtensionHandshakePeerMessage(InputStream is) throws IOException {
+        PeerMessage peerMessage = new PeerMessage();
+        byte[] prefixedLengthBytes = is.readNBytes(PEER_MESSAGE_PREFIXED_LENGTH);
+        System.out.println(Arrays.toString(prefixedLengthBytes));
+        int prefixedLength = ByteUtil.getAsInt(prefixedLengthBytes);
+        peerMessage.setPrefixedLength(prefixedLength);
+
+        int messageId = is.read();
+        assert messageId == DEFAULT_PEER_HANDSHAKE_MESSAGE_ID;
+        peerMessage.setMessageId((byte) messageId);
+
+        peerMessage.setPayload(is.readNBytes(prefixedLength - PEER_MESSAGE_ID_LENGTH));
+        return peerMessage;
+    }
+
+    public static PeerExtensionMessage parsePeerExtensionMessage(byte[] bytes) {
+        PeerExtensionMessage peerExtensionMessage = new PeerExtensionMessage();
+        int offset = 0;
+        peerExtensionMessage.setMessageId(bytes[offset]);
+        offset++;
+
+        Map<String, Integer> extensionNameIdMap = new HashMap<>();
+        peerExtensionMessage.setExtensionNameIdMap(extensionNameIdMap);
+        System.out.println(Arrays.toString(bytes));
+        byte[] payload = Arrays.copyOfRange(bytes, offset, bytes.length);
+        BDecoderV2 bDecoderV2 = new BDecoderV2(payload);
+        ValueWrapper valueWrapper = bDecoderV2.decode();
+        assert Objects.equals(valueWrapper.getbEncodeType(), TypeEnum.DICT);
+        Map<String, ValueWrapper> map = (Map<String, ValueWrapper>) valueWrapper.getO();
+
+        ValueWrapper mMapVW = map.get(PEER_HANDSHAKE_M);
+        if (Objects.isNull(mMapVW)) {
+            return peerExtensionMessage;
+        }
+        assert Objects.equals(mMapVW.getbEncodeType(), TypeEnum.DICT);
+        Map<String, ValueWrapper> mMap = (Map<String, ValueWrapper>) mMapVW.getO();
+        for (Map.Entry<String, ValueWrapper> mMapEntry: mMap.entrySet()) {
+            String key = mMapEntry.getKey();
+            ValueWrapper valueVW = mMapEntry.getValue();
+            if (!TypeEnum.isInteger(valueVW.getbEncodeType())) {
+                continue;
+            }
+            Integer value = (Integer) valueVW.getO();
+            extensionNameIdMap.put(key, value);
+        }
+
+        return peerExtensionMessage;
+    }
 }
