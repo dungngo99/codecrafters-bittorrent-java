@@ -248,23 +248,23 @@ public class PeerUtil {
 
     public static PeerMessage sendExtensionHandshakeMessage(OutputStream os) throws IOException {
         PeerMessage peerMessage = new PeerMessage();
-        peerMessage.setMessageId(DEFAULT_PEER_HANDSHAKE_MESSAGE_ID.byteValue());
+        peerMessage.setMessageId(DEFAULT_EXTENSION_HANDSHAKE_MESSAGE_ID.byteValue());
 
-        Map<String, ValueWrapper> extensionMessageMap = new HashMap<>();
-        ValueWrapper extensionMessageMapVW = new ValueWrapper(TypeEnum.DICT, extensionMessageMap);
+        Map<String, ValueWrapper> extensionHandshakeMessageMap = new HashMap<>();
+        ValueWrapper extensionMessageMapVW = new ValueWrapper(TypeEnum.DICT, extensionHandshakeMessageMap);
 
-        Map<String, ValueWrapper> subExtensionMessageMap = new HashMap<>();
-        ValueWrapper subExtensionMessageMapVW = new ValueWrapper(TypeEnum.DICT, subExtensionMessageMap);
-        extensionMessageMap.put(PEER_HANDSHAKE_M, subExtensionMessageMapVW);
+        Map<String, ValueWrapper> subExtensionHandshakeMessageMap = new HashMap<>();
+        ValueWrapper subExtensionHandshakeMessageMapVW = new ValueWrapper(TypeEnum.DICT, subExtensionHandshakeMessageMap);
+        extensionHandshakeMessageMap.put(EXTENSION_HANDSHAKE_M_KEY_NAME, subExtensionHandshakeMessageMapVW);
 
-        ValueWrapper extensionMessageUtMetadataVW = new ValueWrapper(TypeEnum.INTEGER, DEFAULT_PEER_HANDSHAKE_UT_METADATA_ID);
-        subExtensionMessageMap.put(PEER_HANDSHAKE_UT_METADATA_NAME, extensionMessageUtMetadataVW);
+        ValueWrapper extensionHandshakeMessageUtMetadataVW = new ValueWrapper(TypeEnum.INTEGER, DEFAULT_EXTENSION_HANDSHAKE_UT_METADATA_ID);
+        subExtensionHandshakeMessageMap.put(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME, extensionHandshakeMessageUtMetadataVW);
 
         BEncoderV2 bEncoderV2 = new BEncoderV2(extensionMessageMapVW);
         byte[] extensionMessageBytes = bEncoderV2.encode();
-        byte[] payload = new byte[DEFAULT_PEER_HANDSHAKE_EXTENSION_MESSAGE_ID_LENGTH + extensionMessageBytes.length];
+        byte[] payload = new byte[DEFAULT_EXTENSION_HANDSHAKE_MESSAGE_ID_LENGTH + extensionMessageBytes.length];
         int offset = 0;
-        ByteUtil.fill(payload, new byte[]{DEFAULT_PEER_HANDSHAKE_EXTENSION_MESSAGE_ID.byteValue()}, offset);
+        ByteUtil.fill(payload, new byte[]{DEFAULT_EXTENSION_HANDSHAKE_EXTENSION_MESSAGE_ID.byteValue()}, offset);
         offset++;
         ByteUtil.fill(payload, extensionMessageBytes, offset);
         peerMessage.setPayload(payload);
@@ -278,22 +278,22 @@ public class PeerUtil {
         return peerMessage;
     }
 
-    public static PeerMessage listenExtensionHandshakePeerMessage(InputStream is) throws IOException {
+    public static PeerMessage listenExtensionHandshakeMessage(InputStream is) throws IOException {
         PeerMessage peerMessage = new PeerMessage();
         byte[] prefixedLengthBytes = is.readNBytes(PEER_MESSAGE_PREFIXED_LENGTH);
         int prefixedLength = ByteUtil.getAsInt(prefixedLengthBytes);
         peerMessage.setPrefixedLength(prefixedLength);
 
         int messageId = is.read();
-        assert messageId == DEFAULT_PEER_HANDSHAKE_MESSAGE_ID;
+        assert messageId == DEFAULT_EXTENSION_HANDSHAKE_MESSAGE_ID;
         peerMessage.setMessageId((byte) messageId);
 
         peerMessage.setPayload(is.readNBytes(prefixedLength - PEER_MESSAGE_ID_LENGTH));
         return peerMessage;
     }
 
-    public static PeerExtensionMessage parsePeerExtensionMessage(byte[] bytes) {
-        PeerExtensionMessage peerExtensionMessage = new PeerExtensionMessage();
+    public static ExtensionHandshakeMessagePayload parseExtensionHandshakeMessagePayload(byte[] bytes) {
+        ExtensionHandshakeMessagePayload peerExtensionMessage = new ExtensionHandshakeMessagePayload();
         int offset = 0;
         peerExtensionMessage.setMessageId(bytes[offset]);
         offset++;
@@ -307,7 +307,7 @@ public class PeerUtil {
         assert Objects.equals(valueWrapper.getbEncodeType(), TypeEnum.DICT);
         Map<String, ValueWrapper> map = (Map<String, ValueWrapper>) valueWrapper.getO();
 
-        ValueWrapper mMapVW = map.get(PEER_HANDSHAKE_M);
+        ValueWrapper mMapVW = map.get(EXTENSION_HANDSHAKE_M_KEY_NAME);
         if (Objects.isNull(mMapVW)) {
             return peerExtensionMessage;
         }
@@ -324,5 +324,42 @@ public class PeerUtil {
         }
 
         return peerExtensionMessage;
+    }
+
+    public static Map<String, ValueWrapper> convertExtensionNameToIdVWMap(Map<String, Integer> extensionIdToNameMap) {
+        Map<String, ValueWrapper> extensionIdNameVWMap = new HashMap<>();
+        if (extensionIdToNameMap.containsKey(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME)) {
+            Integer extensionId = extensionIdToNameMap.get(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME);
+            extensionIdNameVWMap.put(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME, new ValueWrapper(TypeEnum.INTEGER, extensionId));
+        }
+        return extensionIdNameVWMap;
+    }
+
+    public static PeerMessage sendExtensionMetadataMessage(OutputStream os, Integer peerMetadataExtensionID) throws IOException {
+        PeerMessage peerMessage = new PeerMessage();
+        peerMessage.setMessageId(DEFAULT_EXTENSION_HANDSHAKE_MESSAGE_ID.byteValue());
+
+        Map<String, ValueWrapper> extensionMetadataMessageMap = new HashMap<>();
+        ValueWrapper extensionMetadataMessageMapVW = new ValueWrapper(TypeEnum.DICT, extensionMetadataMessageMap);
+
+        ValueWrapper msgTypeVW = new ValueWrapper(TypeEnum.INTEGER, DEFAULT_EXTENSION_METADATA_MSG_TYPE_ID);
+        ValueWrapper pieceVW = new ValueWrapper(TypeEnum.INTEGER, DEFAULT_EXTENSION_METADATA_PIECE_ID);
+        extensionMetadataMessageMap.put(EXTENSION_METADATA_MSG_TYPE_KEY_NAME, msgTypeVW);
+        extensionMetadataMessageMap.put(EXTENSION_METADATA_PIECE_KEY_NAME, pieceVW);
+
+        BEncoderV2 bEncoderV2 = new BEncoderV2(extensionMetadataMessageMapVW);
+        byte[] extensionMetadataMessageMapVWBytes = bEncoderV2.encode();
+        byte[] payload = new byte[DEFAULT_EXTENSION_METADATA_MESSAGE_ID_LENGTH + extensionMetadataMessageMapVWBytes.length];
+        int offset = 0;
+        ByteUtil.fill(payload, new byte[]{peerMetadataExtensionID.byteValue()}, offset);
+        offset++;
+        ByteUtil.fill(payload, extensionMetadataMessageMapVWBytes, offset);
+        peerMessage.setPayload(payload);
+
+        int prefixedLength = PEER_MESSAGE_ID_LENGTH + payload.length;
+        peerMessage.setPrefixedLength(prefixedLength);
+
+        SocketUtil.writeThenFlush(os, convertPeerMessageToBytes(peerMessage));
+        return peerMessage;
     }
 }

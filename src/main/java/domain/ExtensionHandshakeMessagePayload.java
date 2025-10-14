@@ -2,7 +2,7 @@ package domain;
 
 import java.util.Map;
 
-public class PeerExtensionMessage {
+public class ExtensionHandshakeMessagePayload {
     private byte messageId;
     private Map<String, Integer> extensionNameIdMap;
 

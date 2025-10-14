@@ -1,6 +1,4 @@
-import domain.ValueWrapper;
-import handler.CmdHandler;
-import handler.CmdStore;
+import handler.HybridCmdStore;
 
 import java.util.Arrays;
 
@@ -10,10 +8,9 @@ public class Main {
             return;
         }
         String cmd = args[0];
+        String[] cmdArgs = Arrays.copyOfRange(args, 1, args.length);
         try {
-            CmdHandler cmdHandler = CmdStore.getCmd(cmd);
-            ValueWrapper vw = cmdHandler.getValueWrapper(Arrays.copyOfRange(args, 1, args.length));
-            cmdHandler.handleValueWrapper(vw);
+            HybridCmdStore.handleCmd(cmd, cmdArgs);
         } catch(RuntimeException e) {
             System.out.println(e.getMessage());
         }

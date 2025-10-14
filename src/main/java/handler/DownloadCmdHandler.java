@@ -33,7 +33,7 @@ public class DownloadCmdHandler implements CmdHandler {
         String torrentFilePath = args[2];
 
         // get .torrent file info from INFO cmd
-        CmdHandler infoCmdHandler = CmdStore.getCmd(CmdTypeEnum.INFO.name().toLowerCase());
+        CmdHandler infoCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.INFO.name().toLowerCase());
         ValueWrapper torrentFileVW = infoCmdHandler.getValueWrapper(new String[]{torrentFilePath});
         ValueWrapper torrentFilePathVW = new ValueWrapper(TypeEnum.STRING, torrentFilePath);
         ValueWrapper outputFilePathVW = new ValueWrapper(TypeEnum.STRING, outputFilePath);
@@ -68,7 +68,7 @@ public class DownloadCmdHandler implements CmdHandler {
         // get peer size from downloadMap
         Map<String, ValueWrapper> downloadVWMap = (Map<String, ValueWrapper>) vw.getO();
         ValueWrapper torrentFileVW = downloadVWMap.get(TORRENT_FILE_VALUE_WRAPPER_KEY);
-        CmdHandler peersCmdHandler = CmdStore.getCmd(CmdTypeEnum.PEERS.name().toLowerCase());
+        CmdHandler peersCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.PEERS.name().toLowerCase());
         List<PeerInfo> peerInfoList = (List<PeerInfo>) peersCmdHandler.handleValueWrapper(torrentFileVW);
         int peerInfoSize = peerInfoList.size();
 
@@ -163,7 +163,7 @@ public class DownloadCmdHandler implements CmdHandler {
 
         // download each piece
         String[] args = downloadJob.convertToArgs();
-        CmdHandler downloadPieceCmdHandler = CmdStore.getCmd(CmdTypeEnum.DOWNLOAD_PIECE.name().toLowerCase());
+        CmdHandler downloadPieceCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.DOWNLOAD_PIECE.name().toLowerCase());
         ValueWrapper downloadPieceVW = downloadPieceCmdHandler.getValueWrapper(args);
         downloadPieceCmdHandler.handleValueWrapper(downloadPieceVW);
 

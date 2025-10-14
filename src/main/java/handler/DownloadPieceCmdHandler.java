@@ -40,11 +40,11 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         Integer pieceIndex = Integer.valueOf(args[3]);
 
         // get .torrent file info from INFO cmd
-        CmdHandler infoCmdHandler = CmdStore.getCmd(CmdTypeEnum.INFO.name().toLowerCase());
+        CmdHandler infoCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.INFO.name().toLowerCase());
         ValueWrapper torrentFileVW = infoCmdHandler.getValueWrapper(new String[]{torrentFilePath});
 
         // request tracker to get peer list
-        CmdHandler peersCmdHandler = CmdStore.getCmd(CmdTypeEnum.PEERS.name().toLowerCase());
+        CmdHandler peersCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.PEERS.name().toLowerCase());
         List<PeerInfo> peerList = (List<PeerInfo>) peersCmdHandler.handleValueWrapper(torrentFileVW);
         if (Objects.isNull(peerList) || peerList.isEmpty()) {
             throw new PeerNotExistException("DownloadPieceHandler.getValueWrapper(): no peers exist");
@@ -62,7 +62,7 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         byte[] infoHashBytes = ValueWrapperUtil.getInfoHashAsBytes(torrentFileVW);
         String clientPeerId = PeerUtil.getSetPeerId();
         ValueWrapper handshakeVW = ValueWrapperUtil.createHandshakeVW(ipAddressPortNumber, infoHashBytes, clientPeerId);
-        CmdHandler handshakeCmdHandler = CmdStore.getCmd(CmdTypeEnum.HANDSHAKE.name().toLowerCase());
+        CmdHandler handshakeCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.HANDSHAKE.name().toLowerCase());
         Map<String, ValueWrapper> peerHandshakeMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
 
         // combine args, .torrent file info, socket info for next stage

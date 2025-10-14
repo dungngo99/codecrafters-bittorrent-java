@@ -8,29 +8,25 @@ import exception.MagnetLinkException;
 import util.*;
 
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static constants.Constant.*;
 
-public class MagnetHandshakeCmdHandler implements CmdHandler {
+public class MagnetHandshakeCmdHandler implements CmdHandlerV2 {
     private static final Logger logger = Logger.getLogger(MagnetHandshakeCmdHandler.class.getName());
 
     @Override
-    public ValueWrapper getValueWrapper(String[] args) {
+    public Object handleCmdHandlerV2(String[] args) {
         if (Objects.isNull(args) || args.length < DEFAULT_PARAMS_SIZE_MAGNET_HANDSHAKE_CMD) {
             throw new ArgumentException("MagnetHandshakeCmdHandler.getValueWrapper(): invalid params, args=" + Arrays.toString(args));
         }
 
         // parse magnet link
-        CmdHandler magnetParseCmdHandler = CmdStore.getCmd(CmdTypeEnum.MAGNET_PARSE.name().toLowerCase());
-        ValueWrapper vw = magnetParseCmdHandler.getValueWrapper(args);
-        MagnetLinkV1 magnetLinkV1 = (MagnetLinkV1) magnetParseCmdHandler.handleValueWrapper(vw);
+        CmdHandlerV2 magnetParseCmdHandlerV2 = HybridCmdStore.getCmdHandlerV2(CmdTypeEnum.MAGNET_PARSE.name().toLowerCase());
+        MagnetLinkV1 magnetLinkV1 = (MagnetLinkV1) magnetParseCmdHandlerV2.handleCmdHandlerV2(args);
 
-        // request track to get peer list
+        // request tracker to get peer list
         PeerRequestQueryParam param = new PeerRequestQueryParam();
         param.setTrackerUrl(magnetLinkV1.getDecodedTr());
         param.setInfoHash(magnetLinkV1.getInfoHash());
@@ -41,20 +37,22 @@ public class MagnetHandshakeCmdHandler implements CmdHandler {
             throw new MagnetLinkException("MagnetHandshakeCmdHandler.getValueWrapper(): no peer found, args=" + Arrays.toString(args));
         }
 
-        // establish connection and perform handshake
+        // establish the socket connection with 1 peer
         int peerIndex = PeerUtil.randomizePeerBySize(peerInfoList.size());
         PeerInfo peerInfo = peerInfoList.get(peerIndex);
         String ipAddressPortNumber = String.format(IP_ADDRESS_PORT_NUMBER_FORMAT, peerInfo.getIp(), peerInfo.getPort());
         byte[] infoHashBytes = DigestUtil.getBytesFromHex(magnetLinkV1.getInfoHash());
         String clientPeerId = PeerUtil.getSetPeerId();
-        Long reservedOption = BitUtil.set(INITIAL_OPTION, PEER_EXCHANGE_TORRENT_METADATA_EXTENSION_OPTION);
+        Long reservedOption = BitUtil.set(INITIAL_OPTION, TORRENT_METADATA_EXTENSION_OPTION);
         ValueWrapper handshakeVW = ValueWrapperUtil.createHandshakeVW(ipAddressPortNumber, infoHashBytes, clientPeerId, reservedOption);
 
-        CmdHandler handshakeCmdHandler = CmdStore.getCmd(CmdTypeEnum.HANDSHAKE.name().toLowerCase());
-        Map<String, ValueWrapper> peerHandshakeMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
-        Socket socket = (Socket) peerHandshakeMap.get(HANDSHAKE_PEER_SOCKET_CONNECTION).getO();
+        // perform the base handshake
+        CmdHandler handshakeCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.HANDSHAKE.name().toLowerCase());
+        Map<String, ValueWrapper> baseHandshakeMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
+        Socket socket = (Socket) baseHandshakeMap.get(HANDSHAKE_PEER_SOCKET_CONNECTION).getO();
+        Map<String, ValueWrapper> handshakeMap = new HashMap<>(baseHandshakeMap);
 
-        // listen bitfield from peer extension message
+        // listen bitfield peer message
         try {
             PeerMessage bitFieldPeerMessage = PeerUtil.listenBitFieldPeerMessage(socket.getInputStream());
             logger.info("listened for extension handshake bitfield peer message with message=" + bitFieldPeerMessage);
@@ -62,32 +60,32 @@ public class MagnetHandshakeCmdHandler implements CmdHandler {
             throw new MagnetLinkException("failed to listen bitfield peer extension message due to error=" + e.getMessage());
         }
 
-        // perform extension handshake message
+        // perform the extension handshake
         try {
-            byte[] peerReservedOptionBytes = (byte[]) peerHandshakeMap.get(HANDSHAKE_PEER_RESERVED_OPTION).getO();
+            // send the extension handshake
+            byte[] peerReservedOptionBytes = (byte[]) baseHandshakeMap.get(HANDSHAKE_PEER_RESERVED_OPTION).getO();
             long peerReservedOption = ByteUtil.getAsLong(peerReservedOptionBytes);
-            if (BitUtil.isSet(peerReservedOption, PEER_EXCHANGE_TORRENT_METADATA_EXTENSION_OPTION)) {
+            if (BitUtil.isSet(peerReservedOption, TORRENT_METADATA_EXTENSION_OPTION)) {
                 PeerMessage extensionHandshakeMessage = PeerUtil.sendExtensionHandshakeMessage(socket.getOutputStream());
-                logger.info("sent extension handshake message with peerMessage=" + extensionHandshakeMessage);
+                logger.info("sent extension handshake message: " + extensionHandshakeMessage);
             }
 
-            PeerMessage peerMessage = PeerUtil.listenExtensionHandshakePeerMessage(socket.getInputStream());
-            PeerExtensionMessage peerExtensionMessage = PeerUtil.parsePeerExtensionMessage(peerMessage.getPayload());
-            Map<String, Integer> extensionNameIdMap = peerExtensionMessage.getExtensionNameIdMap();
-            if (extensionNameIdMap.containsKey(PEER_HANDSHAKE_UT_METADATA_NAME)) {
-                System.out.println("Peer Metadata Extension ID: " + extensionNameIdMap.get(PEER_HANDSHAKE_UT_METADATA_NAME));
+            // receive the extension handshake
+            PeerMessage extensionHandshakeMessage = PeerUtil.listenExtensionHandshakeMessage(socket.getInputStream());
+            ExtensionHandshakeMessagePayload extensionHandshakeMessagePayload = PeerUtil.parseExtensionHandshakeMessagePayload(extensionHandshakeMessage.getPayload());
+            Map<String, Integer> extensionNameToIdMap = extensionHandshakeMessagePayload.getExtensionNameIdMap();
+            if (extensionNameToIdMap.containsKey(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME)) {
+                System.out.println("Peer Metadata Extension ID: " + extensionNameToIdMap.get(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME));
             } else {
-                logger.warning("peer metadata extension id not found for " + peerExtensionMessage);
+                logger.warning("peer metadata extension id not found for " + extensionHandshakeMessagePayload);
             }
+
+            Map<String, ValueWrapper> extensionNameToIdVWMap = PeerUtil.convertExtensionNameToIdVWMap(extensionNameToIdMap);
+            handshakeMap.putAll(extensionNameToIdVWMap);
         } catch (Exception e) {
             throw new MagnetLinkException("failed to perform extension handshake message due to error=" + e.getMessage());
         }
 
-        return new ValueWrapper(TypeEnum.DICT, peerHandshakeMap);
-    }
-
-    @Override
-    public Object handleValueWrapper(ValueWrapper vw) {
-        return null;
+        return new ValueWrapper(TypeEnum.DICT, handshakeMap);
     }
 }

@@ -28,7 +28,7 @@ public class PeersCmdHandler implements CmdHandler {
         }
 
         // get .torrent file info from INFO cmd
-        CmdHandler infoCmdHandler = CmdStore.getCmd(CmdTypeEnum.INFO.name().toLowerCase());
+        CmdHandler infoCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.INFO.name().toLowerCase());
         return infoCmdHandler.getValueWrapper(args);
     }
 

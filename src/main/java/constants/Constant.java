@@ -111,11 +111,16 @@ public class Constant {
     public static final Integer MAGNET_HANDSHAKE_DEFAULT_INFO_LENGTH = 999;
     public static final Integer PARAM_KV_PAIR_LENGTH = 2;
     public static final Long INITIAL_OPTION = 0L;
-    public static final Long PEER_EXCHANGE_TORRENT_METADATA_EXTENSION_OPTION = 1L << 20;
-    public static final Integer DEFAULT_PEER_HANDSHAKE_MESSAGE_ID = 20;
-    public static final Integer DEFAULT_PEER_HANDSHAKE_EXTENSION_MESSAGE_ID = 0;
-    public static final Integer DEFAULT_PEER_HANDSHAKE_UT_METADATA_ID = 1;
-    public static final Integer DEFAULT_PEER_HANDSHAKE_EXTENSION_MESSAGE_ID_LENGTH = 1;
-    public static final String PEER_HANDSHAKE_M = "m";
-    public static final String PEER_HANDSHAKE_UT_METADATA_NAME = "ut_metadata";
+    public static final Long TORRENT_METADATA_EXTENSION_OPTION = 1L << 20;
+    public static final Integer DEFAULT_EXTENSION_HANDSHAKE_MESSAGE_ID = 20;
+    public static final Integer DEFAULT_EXTENSION_HANDSHAKE_EXTENSION_MESSAGE_ID = 0;
+    public static final Integer DEFAULT_EXTENSION_HANDSHAKE_UT_METADATA_ID = 1;
+    public static final Integer DEFAULT_EXTENSION_HANDSHAKE_MESSAGE_ID_LENGTH = 1;
+    public static final String EXTENSION_HANDSHAKE_M_KEY_NAME = "m";
+    public static final String EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME = "ut_metadata";
+    public static final String EXTENSION_METADATA_MSG_TYPE_KEY_NAME = "msg_type";
+    public static final String EXTENSION_METADATA_PIECE_KEY_NAME = "piece";
+    public static final Integer DEFAULT_EXTENSION_METADATA_MESSAGE_ID_LENGTH = 1;
+    public static final Integer DEFAULT_EXTENSION_METADATA_MSG_TYPE_ID = 0;
+    public static final Integer DEFAULT_EXTENSION_METADATA_PIECE_ID = 0;
 }
