@@ -17,8 +17,16 @@ public class BDecoderV2 {
     }
 
     public BDecoderV2(byte[] bytes) {
+        this(bytes, 0);
+    }
+
+    public BDecoderV2(byte[] bytes, int i) {
         this.bytes = bytes;
-        this.i = 0;
+        this.i = i;
+    }
+
+    public int getI() {
+        return i;
     }
 
     public ValueWrapper decode() {

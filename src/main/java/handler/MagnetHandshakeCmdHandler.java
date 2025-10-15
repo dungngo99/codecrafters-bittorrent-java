@@ -1,7 +1,7 @@
 package handler;
 
 import domain.*;
-import enums.CmdTypeEnum;
+import enums.CmdType;
 import enums.TypeEnum;
 import exception.ArgumentException;
 import exception.MagnetLinkException;
@@ -23,7 +23,7 @@ public class MagnetHandshakeCmdHandler implements CmdHandlerV2 {
         }
 
         // parse magnet link
-        CmdHandlerV2 magnetParseCmdHandlerV2 = HybridCmdStore.getCmdHandlerV2(CmdTypeEnum.MAGNET_PARSE.name().toLowerCase());
+        CmdHandlerV2 magnetParseCmdHandlerV2 = HybridCmdStore.getCmdHandlerV2(CmdType.MAGNET_PARSE.name().toLowerCase());
         MagnetLinkV1 magnetLinkV1 = (MagnetLinkV1) magnetParseCmdHandlerV2.handleCmdHandlerV2(args);
 
         // request tracker to get peer list
@@ -32,7 +32,7 @@ public class MagnetHandshakeCmdHandler implements CmdHandlerV2 {
         param.setInfoHash(magnetLinkV1.getInfoHash());
         param.setInfoLength(String.valueOf(MAGNET_HANDSHAKE_DEFAULT_INFO_LENGTH));
         param.setPeerId(PeerUtil.getSetPeerId());
-        List<PeerInfo> peerInfoList = PeerUtil.requestPeerInfoList(param);
+        List<PeerInfo> peerInfoList = PeerUtil.performPeerInfoList(param);
         if (peerInfoList.isEmpty()) {
             throw new MagnetLinkException("MagnetHandshakeCmdHandler.getValueWrapper(): no peer found, args=" + Arrays.toString(args));
         }
@@ -47,7 +47,7 @@ public class MagnetHandshakeCmdHandler implements CmdHandlerV2 {
         ValueWrapper handshakeVW = ValueWrapperUtil.createHandshakeVW(ipAddressPortNumber, infoHashBytes, clientPeerId, reservedOption);
 
         // perform the base handshake
-        CmdHandler handshakeCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.HANDSHAKE.name().toLowerCase());
+        CmdHandler handshakeCmdHandler = HybridCmdStore.getCmdHandler(CmdType.HANDSHAKE.name().toLowerCase());
         Map<String, ValueWrapper> baseHandshakeMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
         Socket socket = (Socket) baseHandshakeMap.get(HANDSHAKE_PEER_SOCKET_CONNECTION).getO();
         Map<String, ValueWrapper> handshakeMap = new HashMap<>(baseHandshakeMap);
@@ -66,13 +66,13 @@ public class MagnetHandshakeCmdHandler implements CmdHandlerV2 {
             byte[] peerReservedOptionBytes = (byte[]) baseHandshakeMap.get(HANDSHAKE_PEER_RESERVED_OPTION).getO();
             long peerReservedOption = ByteUtil.getAsLong(peerReservedOptionBytes);
             if (BitUtil.isSet(peerReservedOption, TORRENT_METADATA_EXTENSION_OPTION)) {
-                PeerMessage extensionHandshakeMessage = PeerUtil.sendExtensionHandshakeMessage(socket.getOutputStream());
-                logger.info("sent extension handshake message: " + extensionHandshakeMessage);
+                PeerMessage extensionHandshakeMessageRequest = PeerUtil.sendExtensionHandshakeMessage(socket.getOutputStream());
+                logger.info("sent extension handshake message: " + extensionHandshakeMessageRequest);
             }
 
             // receive the extension handshake
-            PeerMessage extensionHandshakeMessage = PeerUtil.listenExtensionHandshakeMessage(socket.getInputStream());
-            ExtensionHandshakeMessagePayload extensionHandshakeMessagePayload = PeerUtil.parseExtensionHandshakeMessagePayload(extensionHandshakeMessage.getPayload());
+            PeerMessage extensionHandshakeMessageResponse = PeerUtil.listenExtensionHandshakeMessage(socket.getInputStream());
+            ExtensionHandshakeMessagePayload extensionHandshakeMessagePayload = PeerUtil.parseExtensionHandshakeMessagePayload(extensionHandshakeMessageResponse.getPayload());
             Map<String, Integer> extensionNameToIdMap = extensionHandshakeMessagePayload.getExtensionNameIdMap();
             if (extensionNameToIdMap.containsKey(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME)) {
                 System.out.println("Peer Metadata Extension ID: " + extensionNameToIdMap.get(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME));

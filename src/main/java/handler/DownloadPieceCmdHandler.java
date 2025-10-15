@@ -4,7 +4,7 @@ import domain.PeerInfo;
 import domain.PeerMessage;
 import domain.ValueWrapper;
 import enums.TypeEnum;
-import enums.CmdTypeEnum;
+import enums.CmdType;
 import exception.ArgumentException;
 import exception.DownloadPieceException;
 import exception.PeerNotExistException;
@@ -40,11 +40,11 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         Integer pieceIndex = Integer.valueOf(args[3]);
 
         // get .torrent file info from INFO cmd
-        CmdHandler infoCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.INFO.name().toLowerCase());
+        CmdHandler infoCmdHandler = HybridCmdStore.getCmdHandler(CmdType.INFO.name().toLowerCase());
         ValueWrapper torrentFileVW = infoCmdHandler.getValueWrapper(new String[]{torrentFilePath});
 
         // request tracker to get peer list
-        CmdHandler peersCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.PEERS.name().toLowerCase());
+        CmdHandler peersCmdHandler = HybridCmdStore.getCmdHandler(CmdType.PEERS.name().toLowerCase());
         List<PeerInfo> peerList = (List<PeerInfo>) peersCmdHandler.handleValueWrapper(torrentFileVW);
         if (Objects.isNull(peerList) || peerList.isEmpty()) {
             throw new PeerNotExistException("DownloadPieceHandler.getValueWrapper(): no peers exist");
@@ -62,7 +62,7 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         byte[] infoHashBytes = ValueWrapperUtil.getInfoHashAsBytes(torrentFileVW);
         String clientPeerId = PeerUtil.getSetPeerId();
         ValueWrapper handshakeVW = ValueWrapperUtil.createHandshakeVW(ipAddressPortNumber, infoHashBytes, clientPeerId);
-        CmdHandler handshakeCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.HANDSHAKE.name().toLowerCase());
+        CmdHandler handshakeCmdHandler = HybridCmdStore.getCmdHandler(CmdType.HANDSHAKE.name().toLowerCase());
         Map<String, ValueWrapper> peerHandshakeMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
 
         // combine args, .torrent file info, socket info for next stage
@@ -104,26 +104,26 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         try {
             InputStream is = socket.getInputStream();
             OutputStream os = socket.getOutputStream();
-            PeerMessage bitFieldPeerMessage = PeerUtil.listenBitFieldPeerMessage(is);
-            logger.info(String.format("listened for bitfield peer message=%s from peerId=%s", bitFieldPeerMessage, peerId));
+            PeerMessage bitFieldPeerMessageResponse = PeerUtil.listenBitFieldPeerMessage(is);
+            logger.info(String.format("listened for bitfield peer message=%s from peerId=%s", bitFieldPeerMessageResponse, peerId));
 
-            PeerMessage interestedPeerMessage = PeerUtil.sendInterestedPeerMessage(os);
-            logger.info(String.format("sent interested peer message=%s from peerId=%s", interestedPeerMessage, peerId));
+            PeerMessage interestedPeerMessageRequest = PeerUtil.sendInterestedPeerMessage(os);
+            logger.info(String.format("sent interested peer message=%s from peerId=%s", interestedPeerMessageRequest, peerId));
 
-            PeerMessage unchokePeerMessage = PeerUtil.listenUnchokePeerMessage(is);
-            logger.info(String.format("listened unchoke peer message=%s from peerId=%s", unchokePeerMessage, peerId));
+            PeerMessage unchokePeerMessageResponse = PeerUtil.listenUnchokePeerMessage(is);
+            logger.info(String.format("listened unchoke peer message=%s from peerId=%s", unchokePeerMessageResponse, peerId));
 
             int offset = 0;
             int pieceLength = PeerUtil.calculatePieceLengthByIndex(pieceIndex, infoPieceLength, infoLength);
             while (offset < pieceLength) {
                 int length = offset + PEER_MESSAGE_BLOCK_SIZE <= pieceLength ? PEER_MESSAGE_BLOCK_SIZE : pieceLength - offset;
-                PeerMessage blockRequestPeerMessage = PeerUtil.sendBlockRequestPeerMessage(os, pieceIndex, offset, length);
-                logger.info(String.format("sent request peer message=%s from peerId=%s, offset=%s", blockRequestPeerMessage, peerId, offset));
+                PeerMessage blockPeerMessageRequest = PeerUtil.sendBlockPeerMessage(os, pieceIndex, offset, length);
+                logger.info(String.format("sent request peer message=%s from peerId=%s, offset=%s", blockPeerMessageRequest, peerId, offset));
 
-                PeerMessage piecePeerMessage = PeerUtil.listenPiecePeerMessage(is, pieceIndex, offset, length);
-                logger.fine(String.format("listened piece peer message=%s from peerId=%s, offset=%s", piecePeerMessage, peerId, offset));
+                PeerMessage piecePeerMessageResponse = PeerUtil.listenPiecePeerMessage(is, pieceIndex, offset, length);
+                logger.fine(String.format("listened piece peer message=%s from peerId=%s, offset=%s", piecePeerMessageResponse, peerId, offset));
 
-                byte[] payload = piecePeerMessage.getPayload();
+                byte[] payload = piecePeerMessageResponse.getPayload();
                 FileUtil.writeBytesToFile(pieceOutputFilePath, payload, Boolean.TRUE);
                 offset += length;
             }

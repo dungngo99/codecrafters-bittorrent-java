@@ -84,7 +84,7 @@ public class ValueWrapperUtil {
     }
 
     public static String getInfoHashAsHex(ValueWrapper vw) {
-        ValueWrapper infoVW = ValueWrapperUtil.getObjectFromMap(vw, INFO_KEY_INFO_CMD);
+        ValueWrapper infoVW = getObjectFromMap(vw, INFO_KEY_INFO_CMD);
         BEncoderV2 bEncoderV2 = new BEncoderV2(infoVW);
         try {
             byte[] infoBytes = bEncoderV2.encode();
@@ -94,8 +94,24 @@ public class ValueWrapperUtil {
         }
     }
 
+    public static String getInfoHashAsHexFromExtensionMetadata(Map<String, ValueWrapper> metadataExtensionMap) {
+        ValueWrapper metadataExtensionMapVW = new ValueWrapper(TypeEnum.DICT, metadataExtensionMap);
+        ValueWrapper lengthVW = getObjectFromMap(metadataExtensionMapVW, INFO_LENGTH_KEY_INFO_CMD);
+        ValueWrapper nameVW = getObjectFromMap(metadataExtensionMapVW, INFO_NAME_KEY_INFO_CMD);
+        ValueWrapper pieceLengthVW = getObjectFromMap(metadataExtensionMapVW, INFO_PIECE_LENGTH_INFO_CMD);
+        ValueWrapper pieces = getObjectFromMap(metadataExtensionMapVW, INFO_PIECES_INFO_CMD);
+        LinkedHashMap<String, ValueWrapper> infoMap = new LinkedHashMap<>() {{
+           put(INFO_LENGTH_KEY_INFO_CMD, lengthVW);
+           put(INFO_NAME_KEY_INFO_CMD, nameVW);
+           put(INFO_PIECE_LENGTH_INFO_CMD, pieceLengthVW);
+           put(INFO_PIECES_INFO_CMD, pieces);
+        }};
+        ValueWrapper infoMapVW = new ValueWrapper(TypeEnum.DICT, infoMap);
+        return getInfoHashAsHex(infoMapVW);
+    }
+
     public static byte[] getInfoHashAsBytes(ValueWrapper vw) {
-        ValueWrapper infoVW = ValueWrapperUtil.getObjectFromMap(vw, INFO_KEY_INFO_CMD);
+        ValueWrapper infoVW = getObjectFromMap(vw, INFO_KEY_INFO_CMD);
         BEncoderV2 bEncoderV2 = new BEncoderV2(infoVW);
         try {
             byte[] infoBytes = bEncoderV2.encode();

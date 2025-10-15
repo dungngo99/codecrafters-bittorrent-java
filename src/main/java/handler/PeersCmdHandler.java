@@ -3,7 +3,7 @@ package handler;
 import domain.PeerInfo;
 import domain.PeerRequestQueryParam;
 import domain.ValueWrapper;
-import enums.CmdTypeEnum;
+import enums.CmdType;
 import exception.ArgumentException;
 import exception.ValueWrapperException;
 import service.ValueWrapperMap;
@@ -28,7 +28,7 @@ public class PeersCmdHandler implements CmdHandler {
         }
 
         // get .torrent file info from INFO cmd
-        CmdHandler infoCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.INFO.name().toLowerCase());
+        CmdHandler infoCmdHandler = HybridCmdStore.getCmdHandler(CmdType.INFO.name().toLowerCase());
         return infoCmdHandler.getValueWrapper(args);
     }
 
@@ -52,7 +52,7 @@ public class PeersCmdHandler implements CmdHandler {
         param.setPeerId(peerId);
         param.setInfoLength(infoLength);
 
-        List<PeerInfo> peerInfoList = PeerUtil.requestPeerInfoList(param);
+        List<PeerInfo> peerInfoList = PeerUtil.performPeerInfoList(param);
         peerInfoList.forEach(System.out::println);
 
         return peerInfoList;

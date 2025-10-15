@@ -121,6 +121,5 @@ public class Constant {
     public static final String EXTENSION_METADATA_MSG_TYPE_KEY_NAME = "msg_type";
     public static final String EXTENSION_METADATA_PIECE_KEY_NAME = "piece";
     public static final Integer DEFAULT_EXTENSION_METADATA_MESSAGE_ID_LENGTH = 1;
-    public static final Integer DEFAULT_EXTENSION_METADATA_MSG_TYPE_ID = 0;
     public static final Integer DEFAULT_EXTENSION_METADATA_PIECE_ID = 0;
 }

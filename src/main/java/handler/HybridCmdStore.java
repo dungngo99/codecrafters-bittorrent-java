@@ -1,7 +1,7 @@
 package handler;
 
 import domain.ValueWrapper;
-import enums.CmdTypeEnum;
+import enums.CmdType;
 import exception.InvalidCmdException;
 
 import java.util.HashMap;
@@ -10,18 +10,18 @@ import java.util.Objects;
 
 public class HybridCmdStore {
     public static final Map<String, CmdHandler> store = new HashMap<>() {{
-        put(CmdTypeEnum.DECODE.name().toLowerCase(), new DecodeCmdHandler());
-        put(CmdTypeEnum.INFO.name().toLowerCase(), new InfoCmdHandler());
-        put(CmdTypeEnum.PEERS.name().toLowerCase(), new PeersCmdHandler());
-        put(CmdTypeEnum.HANDSHAKE.name().toLowerCase(), new HandshakeCmdHandler());
-        put(CmdTypeEnum.DOWNLOAD_PIECE.name().toLowerCase(), new DownloadPieceCmdHandler());
-        put(CmdTypeEnum.DOWNLOAD.name().toLowerCase(), new DownloadCmdHandler());
+        put(CmdType.DECODE.name().toLowerCase(), new DecodeCmdHandler());
+        put(CmdType.INFO.name().toLowerCase(), new InfoCmdHandler());
+        put(CmdType.PEERS.name().toLowerCase(), new PeersCmdHandler());
+        put(CmdType.HANDSHAKE.name().toLowerCase(), new HandshakeCmdHandler());
+        put(CmdType.DOWNLOAD_PIECE.name().toLowerCase(), new DownloadPieceCmdHandler());
+        put(CmdType.DOWNLOAD.name().toLowerCase(), new DownloadCmdHandler());
     }};
 
     public static final Map<String, CmdHandlerV2> storeV2 = new HashMap<>() {{
-        put(CmdTypeEnum.MAGNET_PARSE.name().toLowerCase(), new MagnetParseCmdHandler());
-        put(CmdTypeEnum.MAGNET_HANDSHAKE.name().toLowerCase(), new MagnetHandshakeCmdHandler());
-        put(CmdTypeEnum.MAGNET_INFO.name().toLowerCase(), new MagnetInfoCmdHandler());
+        put(CmdType.MAGNET_PARSE.name().toLowerCase(), new MagnetParseCmdHandler());
+        put(CmdType.MAGNET_HANDSHAKE.name().toLowerCase(), new MagnetHandshakeCmdHandler());
+        put(CmdType.MAGNET_INFO.name().toLowerCase(), new MagnetInfoCmdHandler());
     }};
 
     public static void handleCmd(String cmd, String[] cmdArgs) {

@@ -3,15 +3,15 @@ package domain;
 import java.util.Map;
 
 public class ExtensionHandshakeMessagePayload {
-    private byte messageId;
+    private byte peerMessageId;
     private Map<String, Integer> extensionNameIdMap;
 
-    public byte getMessageId() {
-        return messageId;
+    public byte getPeerMessageId() {
+        return peerMessageId;
     }
 
-    public void setMessageId(byte messageId) {
-        this.messageId = messageId;
+    public void setPeerMessageId(byte peerMessageId) {
+        this.peerMessageId = peerMessageId;
     }
 
     public Map<String, Integer> getExtensionNameIdMap() {
@@ -25,7 +25,7 @@ public class ExtensionHandshakeMessagePayload {
     @Override
     public String toString() {
         return "PeerExtensionMessage{" +
-                "messageId=" + messageId +
+                "peerMessageId=" + peerMessageId +
                 ", extensionNameIdMap=" + extensionNameIdMap +
                 '}';
     }

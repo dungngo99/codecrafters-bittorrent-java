@@ -2,7 +2,7 @@ package handler;
 
 import domain.ValueWrapper;
 import enums.TypeEnum;
-import enums.CmdTypeEnum;
+import enums.CmdType;
 import exception.ArgumentException;
 import exception.PeerExchangeException;
 import exception.ValueWrapperException;
@@ -30,7 +30,7 @@ public class HandshakeCmdHandler implements CmdHandler {
         String ipAddressPortNumber = args[1];
 
         // get .torrent file info from INFO cmd
-        CmdHandler infoCmdHandler = HybridCmdStore.getCmdHandler(CmdTypeEnum.INFO.name().toLowerCase());
+        CmdHandler infoCmdHandler = HybridCmdStore.getCmdHandler(CmdType.INFO.name().toLowerCase());
         ValueWrapper torrentFileVW = infoCmdHandler.getValueWrapper(new String[]{torrentFilePath});
 
         // combine args and .torrent file info for next stage

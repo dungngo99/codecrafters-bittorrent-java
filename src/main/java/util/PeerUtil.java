@@ -1,6 +1,7 @@
 package util;
 
 import domain.*;
+import enums.ExtensionMessageType;
 import enums.TypeEnum;
 import enums.PeerMessageType;
 import service.BDecoderV2;
@@ -133,7 +134,7 @@ public class PeerUtil {
         return peerMessage;
     }
 
-    public static PeerMessage sendBlockRequestPeerMessage(OutputStream os, int pieceIndex, int offset, int length) throws IOException {
+    public static PeerMessage sendBlockPeerMessage(OutputStream os, int pieceIndex, int offset, int length) throws IOException {
         PeerMessage peerMessage = new PeerMessage();
         peerMessage.setPrefixedLength(PEER_MESSAGE_REQUEST_PREFIXED_LENGTH);
         peerMessage.setMessageId((byte) PeerMessageType.REQUEST.getValue());
@@ -204,7 +205,7 @@ public class PeerUtil {
         return peerId;
     }
 
-    public static List<PeerInfo> requestPeerInfoList(PeerRequestQueryParam param) {
+    public static List<PeerInfo> performPeerInfoList(PeerRequestQueryParam param) {
         String trackerUrl = param.getTrackerUrl();
         String infoHash = param.getInfoHash();
         String infoLength = param.getInfoLength();
@@ -295,7 +296,7 @@ public class PeerUtil {
     public static ExtensionHandshakeMessagePayload parseExtensionHandshakeMessagePayload(byte[] bytes) {
         ExtensionHandshakeMessagePayload peerExtensionMessage = new ExtensionHandshakeMessagePayload();
         int offset = 0;
-        peerExtensionMessage.setMessageId(bytes[offset]);
+        peerExtensionMessage.setPeerMessageId(bytes[offset]);
         offset++;
 
         Map<String, Integer> extensionNameIdMap = new HashMap<>();
@@ -342,7 +343,7 @@ public class PeerUtil {
         Map<String, ValueWrapper> extensionMetadataMessageMap = new HashMap<>();
         ValueWrapper extensionMetadataMessageMapVW = new ValueWrapper(TypeEnum.DICT, extensionMetadataMessageMap);
 
-        ValueWrapper msgTypeVW = new ValueWrapper(TypeEnum.INTEGER, DEFAULT_EXTENSION_METADATA_MSG_TYPE_ID);
+        ValueWrapper msgTypeVW = new ValueWrapper(TypeEnum.INTEGER, ExtensionMessageType.REQUEST.getValue());
         ValueWrapper pieceVW = new ValueWrapper(TypeEnum.INTEGER, DEFAULT_EXTENSION_METADATA_PIECE_ID);
         extensionMetadataMessageMap.put(EXTENSION_METADATA_MSG_TYPE_KEY_NAME, msgTypeVW);
         extensionMetadataMessageMap.put(EXTENSION_METADATA_PIECE_KEY_NAME, pieceVW);
@@ -361,5 +362,46 @@ public class PeerUtil {
 
         SocketUtil.writeThenFlush(os, convertPeerMessageToBytes(peerMessage));
         return peerMessage;
+    }
+
+    public static PeerMessage listenExtensionMetadataMessage(InputStream is) throws IOException {
+        PeerMessage peerMessage = new PeerMessage();
+        byte[] prefixedLengthBytes = is.readNBytes(PEER_MESSAGE_PREFIXED_LENGTH);
+        int prefixedLength = ByteUtil.getAsInt(prefixedLengthBytes);
+        peerMessage.setPrefixedLength(prefixedLength);
+
+        int messageId = is.read();
+        assert messageId == DEFAULT_EXTENSION_HANDSHAKE_MESSAGE_ID;
+        peerMessage.setMessageId((byte) messageId);
+
+        peerMessage.setPayload(is.readNBytes(prefixedLength - PEER_MESSAGE_ID_LENGTH));
+        return peerMessage;
+    }
+
+    public static ExtensionMetadataMessagePayload parseExtensionMetadataMessagePayload(byte[] bytes) {
+        ExtensionMetadataMessagePayload payload = new ExtensionMetadataMessagePayload();
+        int offset = 0;
+        payload.setPeerMessageId(bytes[offset]);
+        offset++;
+
+        Map<String, ValueWrapper> extensionMetadataMap = new HashMap<>();
+        payload.setExtensionMetadataMap(extensionMetadataMap);
+
+        BDecoderV2 metadataBDecoderV2 = new BDecoderV2(bytes, offset);
+        ValueWrapper metadataVW = metadataBDecoderV2.decode();
+        Map<String, ValueWrapper> metadataVWMap = (Map<String, ValueWrapper>) metadataVW.getO();
+        extensionMetadataMap.putAll(metadataVWMap);
+
+        Integer msgType = (Integer) extensionMetadataMap.get(EXTENSION_METADATA_MSG_TYPE_KEY_NAME).getO();
+        assert Objects.equals(msgType, ExtensionMessageType.DATA.getValue());
+
+        offset = metadataBDecoderV2.getI();
+
+        BDecoderV2 metadataPieceBDecoderV2 = new BDecoderV2(bytes, offset);
+        ValueWrapper metadataPieceVW = metadataPieceBDecoderV2.decode();
+        Map<String, ValueWrapper> metadataPieceVWMap = (Map<String, ValueWrapper>) metadataPieceVW.getO();
+        extensionMetadataMap.putAll(metadataPieceVWMap);
+
+        return payload;
     }
 }

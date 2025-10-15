@@ -1,6 +1,6 @@
 package enums;
 
-public enum CmdTypeEnum {
+public enum CmdType {
     DECODE,
     INFO,
     PEERS,
