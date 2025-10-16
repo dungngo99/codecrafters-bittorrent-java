@@ -29,6 +29,12 @@ public class DownloadUtil {
         List<String> pieceHashList = downloadParam.getPieceHashList();
 
         try {
+            // delete pieceOutputFilePath if exists
+            boolean isDelete = FileUtil.deleteFile(pieceOutputFilePath);
+            if (isDelete) {
+                logger.info("deleted piece output file path to avoid incorrect file, pieceOutputFilePath=" + pieceOutputFilePath);
+            }
+
             InputStream is = socket.getInputStream();
             OutputStream os = socket.getOutputStream();
 
@@ -49,7 +55,7 @@ public class DownloadUtil {
                 logger.info(String.format("sent request peer message=%s from peerId=%s, offset=%s", blockPeerMessageRequest, peerId, offset));
 
                 PeerMessage piecePeerMessageResponse = PeerUtil.listenPiecePeerMessage(is, pieceIndex, offset, length);
-                logger.fine(String.format("listened piece peer message=%s from peerId=%s, offset=%s", piecePeerMessageResponse, peerId, offset));
+                logger.info(String.format("listened piece peer message=%s from peerId=%s, offset=%s", piecePeerMessageResponse, peerId, offset));
 
                 byte[] payload = piecePeerMessageResponse.getPayload();
                 FileUtil.writeBytesToFile(pieceOutputFilePath, payload, Boolean.TRUE);

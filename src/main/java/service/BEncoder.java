@@ -1,7 +1,7 @@
 package service;
 
 import domain.ValueWrapper;
-import enums.TypeEnum;
+import enums.Type;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,16 +34,16 @@ public class BEncoder {
             return null;
         }
         Character indicator = next();
-        if (TypeEnum.isInteger(indicator)) {
+        if (Type.isInteger(indicator)) {
             return decodeInteger();
         }
-        if (TypeEnum.isList(indicator)) {
+        if (Type.isList(indicator)) {
             return decodeList();
         }
-        if (TypeEnum.isDict(indicator)) {
+        if (Type.isDict(indicator)) {
             return decodeDict();
         }
-        if (TypeEnum.isString(indicator) && !isEOI(indicator) && !isColon(indicator)) {
+        if (Type.isString(indicator) && !isEOI(indicator) && !isColon(indicator)) {
             return decodeString();
         }
         return null;
@@ -61,14 +61,14 @@ public class BEncoder {
             ans += c - '0';
             c = next();
         }
-        return new ValueWrapper(TypeEnum.INTEGER, isNegative ? -ans : ans);
+        return new ValueWrapper(Type.INTEGER, isNegative ? -ans : ans);
     }
 
     private ValueWrapper decodeString() {
         decrement();
         ValueWrapper vw = decodeInteger();
         String str = new String(nextN((int) vw.getO()));
-        return new ValueWrapper(TypeEnum.STRING, str);
+        return new ValueWrapper(Type.STRING, str);
     }
 
     private ValueWrapper decodeList() {
@@ -78,7 +78,7 @@ public class BEncoder {
             list.add(vw);
             vw = decode();
         }
-        return new ValueWrapper(TypeEnum.LIST, list);
+        return new ValueWrapper(Type.LIST, list);
     }
 
     private ValueWrapper decodeDict() {
@@ -89,7 +89,7 @@ public class BEncoder {
             map.put((String) key.getO(), vw);
             key = decode();
         }
-        return new ValueWrapper(TypeEnum.DICT, map);
+        return new ValueWrapper(Type.DICT, map);
     }
 
     private Character next() {

@@ -4,7 +4,7 @@ import domain.DownloadParam;
 import domain.PeerInfo;
 import domain.ValueWrapper;
 import enums.CmdType;
-import enums.TypeEnum;
+import enums.Type;
 import exception.ArgumentException;
 import exception.PeerNotExistException;
 import exception.ValueWrapperException;
@@ -62,9 +62,9 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         Map<String, ValueWrapper> peerHandshakeMap = (Map<String, ValueWrapper>) handshakeCmdHandler.handleValueWrapper(handshakeVW);
 
         // combine args, .torrent file info, socket info for next stage
-        ValueWrapper peerHandshakeMapVW = new ValueWrapper(TypeEnum.DICT, peerHandshakeMap);
-        ValueWrapper pieceOutputFilePathVW = new ValueWrapper(TypeEnum.STRING, pieceOutputFilePath);
-        ValueWrapper pieceIndexVW = new ValueWrapper(TypeEnum.INTEGER, pieceIndex);
+        ValueWrapper peerHandshakeMapVW = new ValueWrapper(Type.DICT, peerHandshakeMap);
+        ValueWrapper pieceOutputFilePathVW = new ValueWrapper(Type.STRING, pieceOutputFilePath);
+        ValueWrapper pieceIndexVW = new ValueWrapper(Type.INTEGER, pieceIndex);
 
         Map<String, ValueWrapper> downloadPieceVWMap = Map.of(
                 TORRENT_FILE_VALUE_WRAPPER_KEY, torrentFileVW,
@@ -73,7 +73,7 @@ public class DownloadPieceCmdHandler implements CmdHandler {
                 DOWNLOAD_PIECE_INDEX_VALUE_WRAPPER_KEY, pieceIndexVW
         );
 
-        return new ValueWrapper(TypeEnum.DICT, downloadPieceVWMap);
+        return new ValueWrapper(Type.DICT, downloadPieceVWMap);
     }
 
     @Override

@@ -1,7 +1,7 @@
 package util;
 
 import domain.ValueWrapper;
-import enums.TypeEnum;
+import enums.Type;
 import service.BEncoderV2;
 
 import java.io.IOException;
@@ -24,21 +24,21 @@ public class ValueWrapperUtil {
             return null;
         }
 
-        TypeEnum typeEnum = vw.getbEncodeType();
-        if (Objects.equals(typeEnum, TypeEnum.INTEGER)) {
+        Type typeEnum = vw.getbEncodeType();
+        if (Objects.equals(typeEnum, Type.INTEGER)) {
             return vw.getO();
         }
 
-        if (Objects.equals(typeEnum, TypeEnum.STRING)) {
+        if (Objects.equals(typeEnum, Type.STRING)) {
             // if use BDecoder, set needConvertString = false
             return needConvertString ? new String((byte[]) vw.getO(), StandardCharsets.UTF_8) : vw.getO();
         }
 
-        if (Objects.equals(typeEnum, TypeEnum.OBJECT)) {
+        if (Objects.equals(typeEnum, Type.OBJECT)) {
             return vw.getO();
         }
 
-        if (Objects.equals(typeEnum, TypeEnum.LIST)) {
+        if (Objects.equals(typeEnum, Type.LIST)) {
             if (!(vw.getO() instanceof List<?>)) {
                 logger.warning("object not BEncodeTypeEnum.LIST, ignore conversion");
                 return null;
@@ -50,7 +50,7 @@ public class ValueWrapperUtil {
             return list;
         }
 
-        if (Objects.equals(typeEnum, TypeEnum.DICT)) {
+        if (Objects.equals(typeEnum, Type.DICT)) {
             if (!(vw.getO() instanceof Map<?, ?>)) {
                 logger.warning("object not BEncodeTypeEnum.DICT, ignore conversion");
                 return null;
@@ -95,7 +95,7 @@ public class ValueWrapperUtil {
     }
 
     public static String getInfoHashAsHexFromExtensionMetadata(Map<String, ValueWrapper> metadataExtensionMap) {
-        ValueWrapper metadataExtensionMapVW = new ValueWrapper(TypeEnum.DICT, metadataExtensionMap);
+        ValueWrapper metadataExtensionMapVW = new ValueWrapper(Type.DICT, metadataExtensionMap);
         ValueWrapper lengthVW = getObjectFromMap(metadataExtensionMapVW, INFO_LENGTH_KEY_INFO_CMD);
         ValueWrapper nameVW = getObjectFromMap(metadataExtensionMapVW, INFO_NAME_KEY_INFO_CMD);
         ValueWrapper pieceLengthVW = getObjectFromMap(metadataExtensionMapVW, INFO_PIECE_LENGTH_INFO_CMD);
@@ -106,7 +106,7 @@ public class ValueWrapperUtil {
            put(INFO_PIECE_LENGTH_INFO_CMD, pieceLengthVW);
            put(INFO_PIECES_INFO_CMD, pieces);
         }};
-        ValueWrapper infoMapVW = new ValueWrapper(TypeEnum.DICT, infoMap);
+        ValueWrapper infoMapVW = new ValueWrapper(Type.DICT, infoMap);
         return getInfoHashAsHex(infoMapVW);
     }
 
@@ -139,10 +139,10 @@ public class ValueWrapperUtil {
                                                  byte[] infoHashBytes,
                                                  String clientPeerId,
                                                  Long reservedOption) {
-        ValueWrapper ipAddressPortNumberVW = new ValueWrapper(TypeEnum.STRING, ipAddressPortNumber);
-        ValueWrapper infoHashBytesVW = new ValueWrapper(TypeEnum.OBJECT, infoHashBytes);
-        ValueWrapper clientPeerIdVW = new ValueWrapper(TypeEnum.STRING, clientPeerId);
-        ValueWrapper reservedOptionVW = new ValueWrapper(TypeEnum.OBJECT, reservedOption);
+        ValueWrapper ipAddressPortNumberVW = new ValueWrapper(Type.STRING, ipAddressPortNumber);
+        ValueWrapper infoHashBytesVW = new ValueWrapper(Type.OBJECT, infoHashBytes);
+        ValueWrapper clientPeerIdVW = new ValueWrapper(Type.STRING, clientPeerId);
+        ValueWrapper reservedOptionVW = new ValueWrapper(Type.OBJECT, reservedOption);
 
         Map<String, ValueWrapper> handshakeVWMap = Map.of(
                 HANDSHAKE_INFO_HASH_BYTES_VALUE_WRAPPER_KEY, infoHashBytesVW,
@@ -151,6 +151,6 @@ public class ValueWrapperUtil {
                 HANDSHAKE_RESERVED_OPTION_VALUE_WRAPPER_KEY, reservedOptionVW
         );
 
-        return new ValueWrapper(TypeEnum.DICT, handshakeVWMap);
+        return new ValueWrapper(Type.DICT, handshakeVWMap);
     }
 }

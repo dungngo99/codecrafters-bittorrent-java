@@ -2,7 +2,7 @@ package util;
 
 import domain.*;
 import enums.ExtensionMessageType;
-import enums.TypeEnum;
+import enums.Type;
 import enums.PeerMessageType;
 import service.BDecoderV2;
 import service.BEncoderV2;
@@ -60,25 +60,25 @@ public class PeerUtil {
 
     public static ValueWrapper decodeHandshake(InputStream is) throws IOException {
         List<ValueWrapper> list = new ArrayList<>();
-        ValueWrapper vw = new ValueWrapper(TypeEnum.LIST, list);
+        ValueWrapper vw = new ValueWrapper(Type.LIST, list);
 
-        list.add(new ValueWrapper(TypeEnum.INTEGER, is.read()));
+        list.add(new ValueWrapper(Type.INTEGER, is.read()));
 
         char[] bitTorrentChars = new char[HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH];
         for (int j=0; j<HANDSHAKE_BITTORRENT_PROTOCOL_STR_LENGTH; j++) {
             bitTorrentChars[j] = (char) is.read();
         }
-        list.add(new ValueWrapper(TypeEnum.STRING, new String(bitTorrentChars)));
+        list.add(new ValueWrapper(Type.STRING, new String(bitTorrentChars)));
 
-        list.add(new ValueWrapper(TypeEnum.OBJECT, is.readNBytes(HANDSHAKE_RESERVED_BYTE_LENGTH)));
+        list.add(new ValueWrapper(Type.OBJECT, is.readNBytes(HANDSHAKE_RESERVED_BYTE_LENGTH)));
 
-        list.add(new ValueWrapper(TypeEnum.OBJECT, is.readNBytes(HANDSHAKE_INFO_HASH_BYTE_LENGTH)));
+        list.add(new ValueWrapper(Type.OBJECT, is.readNBytes(HANDSHAKE_INFO_HASH_BYTE_LENGTH)));
 
         byte[] peerIdBytes = new byte[HANDSHAKE_PEER_ID_BYTE_LENGTH];
         for (int j=0; j<HANDSHAKE_PEER_ID_BYTE_LENGTH; j++) {
             peerIdBytes[j] = (byte) is.read();
         }
-        list.add(new ValueWrapper(TypeEnum.STRING, DigestUtil.formatHex(peerIdBytes)));
+        list.add(new ValueWrapper(Type.STRING, DigestUtil.formatHex(peerIdBytes)));
 
         return vw;
     }
@@ -231,7 +231,7 @@ public class PeerUtil {
         BDecoderV2 bDecoderV2 = new BDecoderV2(httpResponse.getBytes());
         ValueWrapper trackerVW = bDecoderV2.decode();
         if (Objects.isNull(trackerVW)
-                || !Objects.equals(trackerVW.getbEncodeType(), TypeEnum.DICT)
+                || !Objects.equals(trackerVW.getbEncodeType(), Type.DICT)
                 || !(trackerVW.getO() instanceof Map<?, ?> trackerVWMap)) {
             logger.warning("invalid tracker value wrapper, ignore parsing");
             return peerList;
@@ -252,13 +252,13 @@ public class PeerUtil {
         peerMessage.setMessageId(DEFAULT_EXTENSION_HANDSHAKE_MESSAGE_ID.byteValue());
 
         Map<String, ValueWrapper> extensionHandshakeMessageMap = new HashMap<>();
-        ValueWrapper extensionMessageMapVW = new ValueWrapper(TypeEnum.DICT, extensionHandshakeMessageMap);
+        ValueWrapper extensionMessageMapVW = new ValueWrapper(Type.DICT, extensionHandshakeMessageMap);
 
         Map<String, ValueWrapper> subExtensionHandshakeMessageMap = new HashMap<>();
-        ValueWrapper subExtensionHandshakeMessageMapVW = new ValueWrapper(TypeEnum.DICT, subExtensionHandshakeMessageMap);
+        ValueWrapper subExtensionHandshakeMessageMapVW = new ValueWrapper(Type.DICT, subExtensionHandshakeMessageMap);
         extensionHandshakeMessageMap.put(EXTENSION_HANDSHAKE_M_KEY_NAME, subExtensionHandshakeMessageMapVW);
 
-        ValueWrapper extensionHandshakeMessageUtMetadataVW = new ValueWrapper(TypeEnum.INTEGER, DEFAULT_EXTENSION_HANDSHAKE_UT_METADATA_ID);
+        ValueWrapper extensionHandshakeMessageUtMetadataVW = new ValueWrapper(Type.INTEGER, DEFAULT_EXTENSION_HANDSHAKE_UT_METADATA_ID);
         subExtensionHandshakeMessageMap.put(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME, extensionHandshakeMessageUtMetadataVW);
 
         BEncoderV2 bEncoderV2 = new BEncoderV2(extensionMessageMapVW);
@@ -305,19 +305,19 @@ public class PeerUtil {
         byte[] payload = Arrays.copyOfRange(bytes, offset, bytes.length);
         BDecoderV2 bDecoderV2 = new BDecoderV2(payload);
         ValueWrapper valueWrapper = bDecoderV2.decode();
-        assert Objects.equals(valueWrapper.getbEncodeType(), TypeEnum.DICT);
+        assert Objects.equals(valueWrapper.getbEncodeType(), Type.DICT);
         Map<String, ValueWrapper> map = (Map<String, ValueWrapper>) valueWrapper.getO();
 
         ValueWrapper mMapVW = map.get(EXTENSION_HANDSHAKE_M_KEY_NAME);
         if (Objects.isNull(mMapVW)) {
             return peerExtensionMessage;
         }
-        assert Objects.equals(mMapVW.getbEncodeType(), TypeEnum.DICT);
+        assert Objects.equals(mMapVW.getbEncodeType(), Type.DICT);
         Map<String, ValueWrapper> mMap = (Map<String, ValueWrapper>) mMapVW.getO();
         for (Map.Entry<String, ValueWrapper> mMapEntry: mMap.entrySet()) {
             String key = mMapEntry.getKey();
             ValueWrapper valueVW = mMapEntry.getValue();
-            if (!TypeEnum.isInteger(valueVW.getbEncodeType())) {
+            if (!Type.isInteger(valueVW.getbEncodeType())) {
                 continue;
             }
             Integer value = (Integer) valueVW.getO();
@@ -331,7 +331,7 @@ public class PeerUtil {
         Map<String, ValueWrapper> extensionIdNameVWMap = new HashMap<>();
         if (extensionIdToNameMap.containsKey(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME)) {
             Integer extensionId = extensionIdToNameMap.get(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME);
-            extensionIdNameVWMap.put(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME, new ValueWrapper(TypeEnum.INTEGER, extensionId));
+            extensionIdNameVWMap.put(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME, new ValueWrapper(Type.INTEGER, extensionId));
         }
         return extensionIdNameVWMap;
     }
@@ -341,10 +341,10 @@ public class PeerUtil {
         peerMessage.setMessageId(DEFAULT_EXTENSION_HANDSHAKE_MESSAGE_ID.byteValue());
 
         Map<String, ValueWrapper> extensionMetadataMessageMap = new HashMap<>();
-        ValueWrapper extensionMetadataMessageMapVW = new ValueWrapper(TypeEnum.DICT, extensionMetadataMessageMap);
+        ValueWrapper extensionMetadataMessageMapVW = new ValueWrapper(Type.DICT, extensionMetadataMessageMap);
 
-        ValueWrapper msgTypeVW = new ValueWrapper(TypeEnum.INTEGER, ExtensionMessageType.REQUEST.getValue());
-        ValueWrapper pieceVW = new ValueWrapper(TypeEnum.INTEGER, DEFAULT_EXTENSION_METADATA_PIECE_ID);
+        ValueWrapper msgTypeVW = new ValueWrapper(Type.INTEGER, ExtensionMessageType.REQUEST.getValue());
+        ValueWrapper pieceVW = new ValueWrapper(Type.INTEGER, DEFAULT_EXTENSION_METADATA_PIECE_ID);
         extensionMetadataMessageMap.put(EXTENSION_METADATA_MSG_TYPE_KEY_NAME, msgTypeVW);
         extensionMetadataMessageMap.put(EXTENSION_METADATA_PIECE_KEY_NAME, pieceVW);
 

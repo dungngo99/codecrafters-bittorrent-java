@@ -1,7 +1,7 @@
 package service;
 
 import domain.ValueWrapper;
-import enums.TypeEnum;
+import enums.Type;
 import exception.ArgumentException;
 
 import java.io.ByteArrayOutputStream;
@@ -30,15 +30,15 @@ public class BEncoderV2 {
         if (Objects.isNull(vw_)) {
             return;
         }
-        TypeEnum bEncodeTypeEnum = vw_.getbEncodeType();
+        Type bEncodeTypeEnum = vw_.getbEncodeType();
         Object o = vw_.getO();
-        if (Objects.equals(bEncodeTypeEnum, TypeEnum.INTEGER)) {
+        if (Objects.equals(bEncodeTypeEnum, Type.INTEGER)) {
             encodeInt((Integer) o);
-        } else if (Objects.equals(bEncodeTypeEnum, TypeEnum.STRING)) {
+        } else if (Objects.equals(bEncodeTypeEnum, Type.STRING)) {
             encodeString((byte[]) o);
-        } else if (Objects.equals(bEncodeTypeEnum, TypeEnum.LIST)) {
+        } else if (Objects.equals(bEncodeTypeEnum, Type.LIST)) {
             encodeList((List<ValueWrapper>) o);
-        } else if (Objects.equals(bEncodeTypeEnum, TypeEnum.DICT)) {
+        } else if (Objects.equals(bEncodeTypeEnum, Type.DICT)) {
             encodeDict((Map<String, ValueWrapper>) o);
         } else {
             throw new ArgumentException("invalid b-encode type from ValueWrapper");

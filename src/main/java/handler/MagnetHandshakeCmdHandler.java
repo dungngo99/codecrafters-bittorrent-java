@@ -2,7 +2,7 @@ package handler;
 
 import domain.*;
 import enums.CmdType;
-import enums.TypeEnum;
+import enums.Type;
 import exception.ArgumentException;
 import exception.MagnetLinkException;
 import util.*;
@@ -86,6 +86,6 @@ public class MagnetHandshakeCmdHandler implements CmdHandlerV2 {
             throw new MagnetLinkException("failed to perform extension handshake message due to error=" + e.getMessage());
         }
 
-        return new ValueWrapper(TypeEnum.DICT, handshakeMap);
+        return new ValueWrapper(Type.DICT, handshakeMap);
     }
 }

@@ -1,7 +1,7 @@
 package handler;
 
 import domain.ValueWrapper;
-import enums.TypeEnum;
+import enums.Type;
 import enums.CmdType;
 import exception.ArgumentException;
 import exception.PeerExchangeException;
@@ -67,7 +67,7 @@ public class HandshakeCmdHandler implements CmdHandler {
             List<ValueWrapper> handshakeVWList = (List<ValueWrapper>) handshakeVW.getO();
             ValueWrapper reservedOptionVW = handshakeVWList.get(HANDSHAKE_PEER_RESERVED_OPTION_INDEX_IN_VW_LIST);
             ValueWrapper peerIdVW = handshakeVWList.get(HANDSHAKE_PEER_ID_INDEX_IN_VW_LIST);
-            ValueWrapper peerSocketVW = new ValueWrapper(TypeEnum.OBJECT, socket);
+            ValueWrapper peerSocketVW = new ValueWrapper(Type.OBJECT, socket);
 
             String peerId = (String) peerIdVW.getO();
             System.out.println("Peer ID: " + peerId);

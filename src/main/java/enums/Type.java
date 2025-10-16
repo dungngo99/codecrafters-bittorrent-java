@@ -2,7 +2,7 @@ package enums;
 
 import java.util.Objects;
 
-public enum TypeEnum {
+public enum Type {
     INTEGER(1, 'i'),
     STRING(2, null),
     LIST(3, 'l'),
@@ -13,7 +13,7 @@ public enum TypeEnum {
     private final int value;
     private final Character indicator;
 
-    TypeEnum(int value, Character indicator) {
+    Type(int value, Character indicator) {
         this.value = value;
         this.indicator = indicator;
     }
@@ -34,11 +34,11 @@ public enum TypeEnum {
         return Objects.equals(c, DICT.indicator);
     }
 
-    public static boolean isDict(TypeEnum bEncodeTypeEnum) {
+    public static boolean isDict(Type bEncodeTypeEnum) {
         return Objects.nonNull(bEncodeTypeEnum) && DICT.equals(bEncodeTypeEnum);
     }
 
-    public static boolean isInteger(TypeEnum bEncodeTypeEnum) {
+    public static boolean isInteger(Type bEncodeTypeEnum) {
         return Objects.nonNull(bEncodeTypeEnum) && INTEGER.equals(bEncodeTypeEnum);
     }
 

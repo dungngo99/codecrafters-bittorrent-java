@@ -1,7 +1,7 @@
 package service;
 
 import domain.ValueWrapper;
-import enums.TypeEnum;
+import enums.Type;
 
 import java.util.*;
 
@@ -31,16 +31,16 @@ public class BDecoder {
             return null;
         }
         Character indicator = next();
-        if (TypeEnum.isInteger(indicator)) {
+        if (Type.isInteger(indicator)) {
             return decodeInteger();
         }
-        if (TypeEnum.isList(indicator)) {
+        if (Type.isList(indicator)) {
             return decodeList();
         }
-        if (TypeEnum.isDict(indicator)) {
+        if (Type.isDict(indicator)) {
             return decodeDict();
         }
-        if (TypeEnum.isString(indicator) && !isEOI(indicator) && !isColon(indicator)) {
+        if (Type.isString(indicator) && !isEOI(indicator) && !isColon(indicator)) {
             return decodeString();
         }
         return null;
@@ -58,7 +58,7 @@ public class BDecoder {
             ans += c - '0';
             c = next();
         }
-        return new ValueWrapper(TypeEnum.INTEGER, isNegative ? -ans : ans);
+        return new ValueWrapper(Type.INTEGER, isNegative ? -ans : ans);
     }
 
     private ValueWrapper decodeString() {
@@ -66,7 +66,7 @@ public class BDecoder {
         ValueWrapper vw = decodeInteger();
         int n = ((Long) vw.getO()).intValue();
         String str = new String(nextN(n));
-        return new ValueWrapper(TypeEnum.STRING, str);
+        return new ValueWrapper(Type.STRING, str);
     }
 
     private ValueWrapper decodeList() {
@@ -76,7 +76,7 @@ public class BDecoder {
             vwList.add(vw);
             vw = decode();
         }
-        return new ValueWrapper(TypeEnum.LIST, vwList);
+        return new ValueWrapper(Type.LIST, vwList);
     }
 
     private ValueWrapper decodeDict() {
@@ -87,7 +87,7 @@ public class BDecoder {
             vwMap.put((String) key.getO(), value);
             key = decode();
         }
-        return new ValueWrapper(TypeEnum.DICT, vwMap);
+        return new ValueWrapper(Type.DICT, vwMap);
     }
 
     private Character next() {

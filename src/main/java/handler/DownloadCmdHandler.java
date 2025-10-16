@@ -3,7 +3,7 @@ package handler;
 import domain.DownloadJob;
 import domain.PeerInfo;
 import domain.ValueWrapper;
-import enums.TypeEnum;
+import enums.Type;
 import enums.CmdType;
 import exception.ArgumentException;
 import exception.DownloadException;
@@ -35,8 +35,8 @@ public class DownloadCmdHandler implements CmdHandler {
         // get .torrent file info from INFO cmd
         CmdHandler infoCmdHandler = HybridCmdStore.getCmdHandler(CmdType.INFO.name().toLowerCase());
         ValueWrapper torrentFileVW = infoCmdHandler.getValueWrapper(new String[]{torrentFilePath});
-        ValueWrapper torrentFilePathVW = new ValueWrapper(TypeEnum.STRING, torrentFilePath);
-        ValueWrapper outputFilePathVW = new ValueWrapper(TypeEnum.STRING, outputFilePath);
+        ValueWrapper torrentFilePathVW = new ValueWrapper(Type.STRING, torrentFilePath);
+        ValueWrapper outputFilePathVW = new ValueWrapper(Type.STRING, outputFilePath);
 
         // combine args, .torrent file info for next stage
         Map<String, ValueWrapper> downloadVWMap = Map.of(
@@ -45,7 +45,7 @@ public class DownloadCmdHandler implements CmdHandler {
                 DOWNLOAD_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY, outputFilePathVW
         );
 
-        return new ValueWrapper(TypeEnum.DICT, downloadVWMap);
+        return new ValueWrapper(Type.DICT, downloadVWMap);
     }
 
     @Override

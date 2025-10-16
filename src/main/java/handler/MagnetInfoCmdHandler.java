@@ -5,7 +5,7 @@ import domain.MagnetLinkV1;
 import domain.PeerMessage;
 import domain.ValueWrapper;
 import enums.CmdType;
-import enums.TypeEnum;
+import enums.Type;
 import exception.ArgumentException;
 import exception.MagnetLinkException;
 import util.DigestUtil;
@@ -60,7 +60,7 @@ public class MagnetInfoCmdHandler implements CmdHandlerV2 {
             } else {
                 logger.warning(String.format("magnet-link infoHash (%s) not matched metadata-extension infoHash (%s)", infoHash, metadataExtensionInfoHash));
             }
-            ValueWrapper infoHashVW = new ValueWrapper(TypeEnum.STRING, infoHash);
+            ValueWrapper infoHashVW = new ValueWrapper(Type.STRING, infoHash);
             extensionMetadataMap.put(MAGNET_LINK_INFO_HASH_VALUE_WRAPPER_KEY, infoHashVW);
             System.out.println("Info Hash: " + infoHash);
 
