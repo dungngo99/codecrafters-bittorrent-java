@@ -19,7 +19,7 @@ public class MagnetHandshakeCmdHandler implements CmdHandlerV2 {
     @Override
     public Object handleCmdHandlerV2(String[] args) {
         if (Objects.isNull(args) || args.length < DEFAULT_PARAMS_SIZE_MAGNET_HANDSHAKE_CMD) {
-            throw new ArgumentException("MagnetHandshakeCmdHandler.getValueWrapper(): invalid params, args=" + Arrays.toString(args));
+            throw new ArgumentException("MagnetHandshakeCmdHandler.handleCmdHandlerV2(): invalid params, args=" + Arrays.toString(args));
         }
 
         // parse magnet link
@@ -34,7 +34,7 @@ public class MagnetHandshakeCmdHandler implements CmdHandlerV2 {
         param.setPeerId(PeerUtil.getSetPeerId());
         List<PeerInfo> peerInfoList = PeerUtil.performPeerInfoList(param);
         if (peerInfoList.isEmpty()) {
-            throw new MagnetLinkException("MagnetHandshakeCmdHandler.getValueWrapper(): no peer found, args=" + Arrays.toString(args));
+            throw new MagnetLinkException("MagnetHandshakeCmdHandler.handleCmdHandlerV2(): no peer found, args=" + Arrays.toString(args));
         }
 
         // establish the socket connection with 1 peer

@@ -1,23 +1,19 @@
 package handler;
 
+import domain.DownloadParam;
 import domain.PeerInfo;
-import domain.PeerMessage;
 import domain.ValueWrapper;
-import enums.TypeEnum;
 import enums.CmdType;
+import enums.TypeEnum;
 import exception.ArgumentException;
-import exception.DownloadPieceException;
 import exception.PeerNotExistException;
 import exception.ValueWrapperException;
 import service.ValueWrapperMap;
 import util.DigestUtil;
-import util.FileUtil;
+import util.DownloadUtil;
 import util.PeerUtil;
 import util.ValueWrapperUtil;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
@@ -101,54 +97,15 @@ public class DownloadPieceCmdHandler implements CmdHandler {
         String peerId = (String) peerHandshakeMap.get(HANDSHAKE_PEER_ID);
         Socket socket = (Socket) peerHandshakeMap.get(HANDSHAKE_PEER_SOCKET_CONNECTION);
 
-        try {
-            InputStream is = socket.getInputStream();
-            OutputStream os = socket.getOutputStream();
-            PeerMessage bitFieldPeerMessageResponse = PeerUtil.listenBitFieldPeerMessage(is);
-            logger.info(String.format("listened for bitfield peer message=%s from peerId=%s", bitFieldPeerMessageResponse, peerId));
+        DownloadParam downloadParam = new DownloadParam();
+        downloadParam.setPeerId(peerId);
+        downloadParam.setSocket(socket);
+        downloadParam.setPieceIndex(pieceIndex);
+        downloadParam.setInfoPieceLength(infoPieceLength);
+        downloadParam.setInfoLength(infoLength);
+        downloadParam.setPieceOutputFilePath(pieceOutputFilePath);
+        downloadParam.setPieceHashList(pieceHashList);
 
-            PeerMessage interestedPeerMessageRequest = PeerUtil.sendInterestedPeerMessage(os);
-            logger.info(String.format("sent interested peer message=%s from peerId=%s", interestedPeerMessageRequest, peerId));
-
-            PeerMessage unchokePeerMessageResponse = PeerUtil.listenUnchokePeerMessage(is);
-            logger.info(String.format("listened unchoke peer message=%s from peerId=%s", unchokePeerMessageResponse, peerId));
-
-            int offset = 0;
-            int pieceLength = PeerUtil.calculatePieceLengthByIndex(pieceIndex, infoPieceLength, infoLength);
-            while (offset < pieceLength) {
-                int length = offset + PEER_MESSAGE_BLOCK_SIZE <= pieceLength ? PEER_MESSAGE_BLOCK_SIZE : pieceLength - offset;
-                PeerMessage blockPeerMessageRequest = PeerUtil.sendBlockPeerMessage(os, pieceIndex, offset, length);
-                logger.info(String.format("sent request peer message=%s from peerId=%s, offset=%s", blockPeerMessageRequest, peerId, offset));
-
-                PeerMessage piecePeerMessageResponse = PeerUtil.listenPiecePeerMessage(is, pieceIndex, offset, length);
-                logger.fine(String.format("listened piece peer message=%s from peerId=%s, offset=%s", piecePeerMessageResponse, peerId, offset));
-
-                byte[] payload = piecePeerMessageResponse.getPayload();
-                FileUtil.writeBytesToFile(pieceOutputFilePath, payload, Boolean.TRUE);
-                offset += length;
-            }
-
-            byte[] bytes = FileUtil.readAllBytesFromFile(pieceOutputFilePath);
-            String downloadedPieceHash = DigestUtil.calculateSHA1AsHex(bytes);
-            String torrentFilePieceHash = pieceHashList.get(pieceIndex);
-            if (Objects.equals(downloadedPieceHash, torrentFilePieceHash)) {
-                logger.info("verified the download piece hash against .torrent file piece hash");
-            } else {
-                logger.warning("not matched the download piece hash against .torrent file piece hash");
-            }
-        } catch (IOException e) {
-            logger.warning(String.format("failed to download a piece from peerId=%s to file=%s; index=%s due to %s",
-                    peerId, pieceOutputFilePath, pieceIndex, e.getMessage()));
-            throw new DownloadPieceException(e);
-        } finally {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                logger.warning(String.format("failed to close TCP connection from peerId=%s to file=%s; index=%s due to %s",
-                        peerId, pieceOutputFilePath, pieceIndex, e.getMessage()));
-            }
-        }
-
-        return null;
+        return DownloadUtil.downloadPiece(downloadParam);
     }
 }

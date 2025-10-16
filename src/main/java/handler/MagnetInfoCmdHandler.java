@@ -5,6 +5,7 @@ import domain.MagnetLinkV1;
 import domain.PeerMessage;
 import domain.ValueWrapper;
 import enums.CmdType;
+import enums.TypeEnum;
 import exception.ArgumentException;
 import exception.MagnetLinkException;
 import util.DigestUtil;
@@ -34,7 +35,7 @@ public class MagnetInfoCmdHandler implements CmdHandlerV2 {
         Socket socket = (Socket) handshakeMap.get(HANDSHAKE_PEER_SOCKET_CONNECTION).getO();
         Integer peerMetadataExtensionID = (Integer) handshakeMap.get(EXTENSION_HANDSHAKE_UT_METADATA_KEY_NAME).getO();
 
-        Map<String, ValueWrapper> extensionMetadataMap;
+        Map<String, ValueWrapper> extensionMetadataMap = new HashMap<>(handshakeMap);
         try {
             // send the extension metadata
             OutputStream os = socket.getOutputStream();
@@ -46,9 +47,10 @@ public class MagnetInfoCmdHandler implements CmdHandlerV2 {
             PeerMessage extensionMetadataMessageResponse = PeerUtil.listenExtensionMetadataMessage(is);
             logger.info("received extension metadata message response " + extensionMetadataMessageResponse);
             ExtensionMetadataMessagePayload extensionMetadataMessagePayload = PeerUtil.parseExtensionMetadataMessagePayload(extensionMetadataMessageResponse.getPayload());
-            extensionMetadataMap = extensionMetadataMessagePayload.getExtensionMetadataMap();
+            Map<String, ValueWrapper> extensionMetadataMessageMap = extensionMetadataMessagePayload.getExtensionMetadataMap();
+            extensionMetadataMap.putAll(extensionMetadataMessageMap);
 
-            // extract, validate, and display info hash
+            // extract, validate, store, and display info hash
             CmdHandlerV2 magnetParseCmdHandlerV2 = HybridCmdStore.getCmdHandlerV2(CmdType.MAGNET_PARSE.name().toLowerCase());
             MagnetLinkV1 magnetLinkV1 = (MagnetLinkV1) magnetParseCmdHandlerV2.handleCmdHandlerV2(args);
             String infoHash = magnetLinkV1.getInfoHash();
@@ -58,6 +60,8 @@ public class MagnetInfoCmdHandler implements CmdHandlerV2 {
             } else {
                 logger.warning(String.format("magnet-link infoHash (%s) not matched metadata-extension infoHash (%s)", infoHash, metadataExtensionInfoHash));
             }
+            ValueWrapper infoHashVW = new ValueWrapper(TypeEnum.STRING, infoHash);
+            extensionMetadataMap.put(MAGNET_LINK_INFO_HASH_VALUE_WRAPPER_KEY, infoHashVW);
             System.out.println("Info Hash: " + infoHash);
 
             // extract and display other info
@@ -71,6 +75,14 @@ public class MagnetInfoCmdHandler implements CmdHandlerV2 {
             System.out.println("Piece Hashes:\n" + String.join("\n", pieceHashList));
         } catch (Exception e) {
             throw new MagnetLinkException("failed to perform extension metadata message due to error=" + e.getMessage());
+        } finally {
+            if (Objects.nonNull(socket)) {
+                try {
+                    socket.close();
+                } catch (Exception e) {
+                    logger.warning("failed to close the socket connection due to error=" + e.getMessage());
+                }
+            }
         }
 
         return extensionMetadataMap;

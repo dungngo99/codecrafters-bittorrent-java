@@ -22,6 +22,7 @@ public class HybridCmdStore {
         put(CmdType.MAGNET_PARSE.name().toLowerCase(), new MagnetParseCmdHandler());
         put(CmdType.MAGNET_HANDSHAKE.name().toLowerCase(), new MagnetHandshakeCmdHandler());
         put(CmdType.MAGNET_INFO.name().toLowerCase(), new MagnetInfoCmdHandler());
+        put(CmdType.MAGNET_DOWNLOAD_PIECE.name().toLowerCase(), new MagnetDownloadPieceCmdHandler());
     }};
 
     public static void handleCmd(String cmd, String[] cmdArgs) {

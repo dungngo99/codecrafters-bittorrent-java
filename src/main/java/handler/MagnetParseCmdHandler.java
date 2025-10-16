@@ -16,7 +16,7 @@ public class MagnetParseCmdHandler implements CmdHandlerV2 {
     @Override
     public Object handleCmdHandlerV2(String[] args) {
         if (Objects.isNull(args) || args.length < DEFAULT_PARAMS_SIZE_MAGNET_PARSE_CMD) {
-            throw new ArgumentException("MagnetParseCmdHandler.getValueWrapper(): invalid params, args=" + Arrays.toString(args));
+            throw new ArgumentException("MagnetParseCmdHandler.handleCmdHandlerV2(): invalid params, args=" + Arrays.toString(args));
         }
         MagnetLinkV1 magnetLinkV1 = new MagnetLinkV1();
         String magnetLink = args[0];

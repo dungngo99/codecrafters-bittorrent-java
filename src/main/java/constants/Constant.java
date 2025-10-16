@@ -15,6 +15,10 @@ public class Constant {
     public static final Integer DEFAULT_PARAMS_SIZE_DOWNLOAD_CMD = 3;
     public static final Integer DEFAULT_PARAMS_SIZE_MAGNET_PARSE_CMD = 1;
     public static final Integer DEFAULT_PARAMS_SIZE_MAGNET_HANDSHAKE_CMD = 1;
+    public static final Integer DEFAULT_PARAMS_SIZE_MAGNET_DOWNLOAD_PIECE_CMD = 4;
+    public static final Integer DEFAULT_PARAMS_MAGNET_DOWNLOAD_PIECE_FILE_PATH_INDEX = 1;
+    public static final Integer DEFAULT_PARAMS_MAGNET_DOWNLOAD_PIECE_MAGNET_LINK_INDEX = 2;
+    public static final Integer DEFAULT_PARAMS_MAGNET_DOWNLOAD_PIECE_PIECE_INDEX = 3;
     public static final String ANNOUNCE_KEY_INFO_CMD = "announce";
     public static final String CREATED_BY_KEY_INFO_CMD = "created by";
     public static final String INFO_KEY_INFO_CMD = "info";
@@ -40,6 +44,7 @@ public class Constant {
     public static final String DOWNLOAD_PIECE_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY = "download_piece_output_file_path_value_wrapper";
     public static final String DOWNLOAD_PIECE_INDEX_VALUE_WRAPPER_KEY = "download_piece_index_value_wrapper";
     public static final String DOWNLOAD_OUTPUT_FILE_PATH_VALUE_WRAPPER_KEY = "download_output_file_path_value_wrapper";
+    public static final String MAGNET_LINK_INFO_HASH_VALUE_WRAPPER_KEY = "magnet_link_info_hash_value_wrapper";
     public static final String LEFT_QUERY_PARAM_KEY = "left";
     public static final String COMPACT_QUERY_PARAM_KEY = "compact";
     public static final String DEFAULT_PORT_QUERY_PARAM_VALUE = "6881";
